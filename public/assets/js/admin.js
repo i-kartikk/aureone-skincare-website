@@ -142,10 +142,10 @@
             const sizeStr = variants.length ? variants.map(v => v.size).join(', ') : p.size;
             const totalStock = variants.length ? variants.reduce((s, v) => s + v.stock, 0) : p.stock;
             return `<tr>
-            <td><img class="thumb" src="${esc(p.images[0] || '/assets/img/monogram.png')}" alt=""></td>
+            <td><img class="thumb" src="${esc((p.images && p.images[0]) || '/assets/img/monogram.png')}" alt=""></td>
             <td class="pname"><b>${esc(p.name)}</b><small>${esc(p.subtitle)}</small></td>
             <td>${esc(p.category)}</td>
-            <td>${variants.length ? `From ${money(Math.min(...variants.map(v => v.price)))}` : money(p.price)}${p.comparePrice > p.price && !variants.length ? `<br><s class="muted" style="font-size:12px">${money(p.comparePrice)}</s>` : ''}</td>
+            <td>${variants.length ? `From ${money(Math.min(...variants.map(v => Number(v.price) || 0)))}` : money(p.price)}${p.comparePrice > p.price && !variants.length ? `<br><s class="muted" style="font-size:12px">${money(p.comparePrice)}</s>` : ''}</td>
             <td style="font-size:12px">${esc(sizeStr)}</td>
             <td>${totalStock <= 10 ? `<span class="pill low">${totalStock}</span>` : totalStock}</td>
             <td><span class="pill ${p.active ? 'live' : 'hidden'}">${p.active ? 'Live' : 'Hidden'}</span>${p.featured ? ' <span class="pill" style="--c:var(--gold)">Featured</span>' : ''}</td>
@@ -181,7 +181,7 @@
           <tbody>${rows.map(o => `<tr>
             <td><b>${esc(o.number)}</b>${o.coupon ? `<br><small class="muted">🎟 ${esc(o.coupon)}</small>` : ''}</td>
             <td>${esc(o.customer.name)}<br><small class="muted">${esc(o.customer.phone)}</small></td>
-            <td>${o.items.reduce((s, i) => s + i.qty, 0)}</td>
+            <td>${(o.items || []).reduce((s, i) => s + (Number(i.qty) || 0), 0)}</td>
             <td>${money(o.total)}${o.discount ? `<br><small style="color:var(--ok)">-${money(o.discount)} off</small>` : ''}</td>
             <td>${date(o.createdAt)}</td>
             <td><select class="select select-sm" data-status="${o.id}">${STATUSES.map(s => `<option value="${s}" ${s === o.status ? 'selected' : ''}>${s[0].toUpperCase() + s.slice(1)}</option>`).join('')}</select></td>
@@ -444,6 +444,9 @@
     const isNew = !p;
     p = p ? structuredClone(p) : { name: '', subtitle: '', category: 'Treat', price: '', comparePrice: '', size: '30 ml', stock: 0, variants: [], tagline: '', description: '', benefits: [], ingredients: [], howToUse: '', skinTypes: 'All skin types', images: [], featured: false, active: true };
     if (!Array.isArray(p.variants)) p.variants = [];
+    if (!Array.isArray(p.images)) p.images = [];
+    if (!Array.isArray(p.ingredients)) p.ingredients = [];
+    if (!Array.isArray(p.benefits)) p.benefits = [];
     const m = $('#modal');
     m.hidden = false;
     m.innerHTML = `

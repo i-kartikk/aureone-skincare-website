@@ -147,37 +147,51 @@
   }
 
   /* ---------- shared fragments ---------- */
+  function collectionCard(p) {
+    const cardImg = p.cardImage || p.images[0];
+    return `
+    <article class="product-card-clean reveal">
+      <a href="/product/${esc(p.slug)}" data-link class="pcc-media">
+        <img src="${esc(cardImg)}" alt="${esc(p.name)} — ${esc(p.subtitle)}" loading="lazy">
+      </a>
+      <div class="pcc-body">
+        <h3 class="pcc-title"><a href="/product/${esc(p.slug)}" data-link>${esc(p.name)}</a></h3>
+        <div class="pcc-sub">${esc(p.subtitle)}</div>
+        <a href="/product/${esc(p.slug)}" data-link class="pcc-arrow" aria-label="View ${esc(p.name)}">&rarr;</a>
+      </div>
+    </article>`;
+  }
+
   function card(p) {
     const low = lowestPrice(p);
     const multi = hasVariants(p);
     const save = p.comparePrice > p.price;
     const totalStock = multi ? p.variants.reduce((s, v) => s + v.stock, 0) : p.stock;
+    const cardImg = p.cardImage || p.images[0];
     return `
-    <article class="card glass reveal">
-      <a href="/product/${esc(p.slug)}" data-link class="card-media">
-        ${totalStock <= 0 ? '<span class="card-tag glass">Sold out</span>' : p.featured ? '<span class="card-tag glass">Bestseller</span>' : ''}
-        <img src="${esc(p.images[0])}" alt="${esc(p.name)} — ${esc(p.subtitle)}" loading="lazy">
-        ${p.images[1] ? `<img class="alt" src="${esc(p.images[1])}" alt="" loading="lazy">` : ''}
+    <article class="catalog-card reveal">
+      <a href="/product/${esc(p.slug)}" data-link class="catalog-media">
+        <img src="${esc(cardImg)}" alt="${esc(p.name)} — ${esc(p.subtitle)}" loading="lazy">
       </a>
-      <div class="card-quick"><button class="btn btn-glass btn-sm btn-block" data-add="${p.id}" ${totalStock <= 0 ? 'disabled' : ''}>${totalStock <= 0 ? 'Sold out' : 'Add to bag'}</button></div>
-      <a href="/product/${esc(p.slug)}" data-link class="card-body">
-        <span class="cat">${esc(p.category)}</span>
-        <h3>${esc(p.name)}</h3>
-        <span class="sub">${esc(p.subtitle)}</span>
-        <div class="price">${multi ? `<strong>From ${money(low)}</strong>` : `<strong>${money(p.price)}</strong>${save ? `<s>${money(p.comparePrice)}</s>` : ''}`}<span class="size">${esc(p.size)}</span></div>
-      </a>
+      <div class="catalog-body">
+        <span class="catalog-cat">${esc(p.category)}</span>
+        <h3><a href="/product/${esc(p.slug)}" data-link>${esc(p.name)}</a></h3>
+        <span class="catalog-sub">${esc(p.subtitle)}</span>
+        <div class="catalog-price">${multi ? `<strong>From ${money(low)}</strong>` : `<strong>${money(p.price)}</strong>${save ? `<s>${money(p.comparePrice)}</s>` : ''}`}<span class="size" style="margin-left:auto;font-size:12px;color:var(--muted)">${esc(p.size)}</span></div>
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-gold btn-sm btn-block" data-add="${p.id}" ${totalStock <= 0 ? 'disabled' : ''}>${totalStock <= 0 ? 'Sold out' : 'Add to bag'}</button></div>
     </article>`;
   }
 
   const newsletter = () => `
     <section class="section" style="padding-top:0"><div class="wrap">
-      <div class="newsletter glass reveal">
-        <div class="ornament">✦</div>
-        <h2 class="display">Join the <em class="gold-text">inner circle</em></h2>
-        <p>Be first to know about new rituals, limited editions and quiet luxuries from the house of AUREONÉ.</p>
-        <form class="sub-form glass glass-strong" data-sub>
+      <div class="newsletter-clean reveal">
+        <div class="eyebrow" style="margin-bottom:8px">✦ Inner Circle ✦</div>
+        <h2 class="display">Join the <em class="gold-italic">inner circle</em></h2>
+        <p>Be first to receive skincare rituals, exclusive releases and quiet luxuries from the house of AUREONÉ.</p>
+        <form class="newsletter-form" data-sub>
           <input class="input" type="email" name="email" placeholder="Your email address" required aria-label="Email">
-          <button class="btn btn-gold" type="submit">Subscribe</button>
+          <button class="btn btn-gold" type="submit">Join</button>
         </form>
       </div>
     </div></section>`;
@@ -185,112 +199,744 @@
   /* ---------- pages ---------- */
   const pages = {
     home() {
-      const s = state.settings;
-      const featured = state.products.filter(p => p.featured).slice(0, 8);
-      const list = featured.length ? featured : state.products.slice(0, 8);
-      const title = esc(s.heroTitle).replace(/(healthy skin\.?)$/i, '<em class="gold-text">$1</em>');
+      const s = state.settings || {};
+      const prods = state.products || [];
       return `
-      <section class="hero"><div class="wrap hero-grid">
-        <div class="reveal">
-          <div class="eyebrow">${esc(s.heroEyebrow)}</div>
-          <h1 class="display">${title}</h1>
-          <p class="hero-sub">${esc(s.heroSubtitle)}</p>
-          <div class="hero-cta">
-            <a href="/shop" data-link class="btn btn-gold">Shop the collection</a>
-            <a href="/ritual" data-link class="btn btn-glass">Discover the ritual</a>
-          </div>
-          <div class="hero-stats">
-            <div><strong>${state.products.length}</strong><span>Signature formulas</span></div>
-            <div><strong>0%</strong><span>Parabens · Sulphates</span></div>
-            <div><strong>100%</strong><span>Cruelty free</span></div>
-          </div>
-        </div>
-        <div class="hero-visual reveal">
-          <div class="hero-frame glass"><img src="${esc(s.heroImage)}" alt="The AUREONÉ collection"></div>
-          <div class="chip chip-1 glass glass-strong">${ring('drop')}<div><b>Niacinamide 5%</b><small>Radiance 5</small></div></div>
-          <div class="chip chip-2 glass glass-strong">${ring('sun')}<div><b>SPF 50 PA++++</b><small>Solar Veil</small></div></div>
-        </div>
-      </div></section>
-
-      <div class="marquee" aria-hidden="true"><div class="marquee-track">${
-        Array(2).fill(['Cleanse', 'Brighten', 'Repair', 'Protect', 'Radiate', 'Pure care', 'Real results', 'The Ritual'].map(w => `<span>${w}</span>`).join('')).join('')
-      }</div></div>
-
-      ${state.offers.length ? offersStrip() : ''}
-
-      <section class="section"><div class="wrap">
-        <div class="section-head reveal">
-          <div class="eyebrow">The collection</div>
-          <h2 class="display">Formulas for a <em class="gold-text">luminous</em> everyday</h2>
-          <p>Clean formulations. Visible results. Made with care for a brighter tomorrow.</p>
-        </div>
-        <div class="grid">${list.map(card).join('')}</div>
-        <div style="text-align:center;margin-top:46px" class="reveal"><a href="/shop" data-link class="btn btn-ghost">View all products</a></div>
-      </div></section>
-
-      <section class="section" style="padding-top:0"><div class="wrap">
-        <div class="section-head reveal">
-          <div class="eyebrow">The ritual</div>
-          <h2 class="display">Four steps to radiance</h2>
-          <p>A considered routine, morning and evening — each step designed to work beautifully with the next.</p>
-        </div>
-        ${ritualSteps()}
-      </div></section>
-
-      <section class="section" style="padding-top:0"><div class="wrap split">
-        <div class="reveal">
-          <div class="eyebrow">Our philosophy</div>
-          <h2 class="display">${esc(s.aboutTitle)}</h2>
-          <p>${esc(s.aboutText)}</p>
-          <div class="pillars">
-            <div class="pillar glass">${ring('flask')}Purposeful formulations</div>
-            <div class="pillar glass">${ring('shield')}Skin health first</div>
-            <div class="pillar glass">${ring('sparkle')}Effective actives</div>
-            <div class="pillar glass">${ring('heart')}Luxury, simplified</div>
-          </div>
-          <a href="/about" data-link class="btn btn-gold">Our story</a>
-        </div>
-        <div class="split-media glass reveal"><img src="${esc(s.aboutImage)}" alt="AUREONÉ skincare ritual" loading="lazy"></div>
-      </div></section>
-
-      <section class="section" style="padding-top:0"><div class="wrap">
-        <div class="section-head reveal">
-          <div class="eyebrow">Key ingredients</div>
-          <h2 class="display">Nature, refined by science</h2>
-        </div>
-        <div class="ingredients">
-          ${[
-            ['Niacinamide', 'Controls excess oil, evens skin tone and supports the barrier.', '#eef0ee'],
-            ['Rice Extract', 'A time-honoured ritual for nourishment and natural radiance.', '#f6ecd6'],
-            ['Vitamin C', 'Brightens, boosts radiance and defends against stressors.', '#f3cf8f'],
-            ['Ceramides', 'Restore and strengthen the skin barrier for lasting comfort.', '#efe2c6']
-          ].map(([n, d, c]) => `<div class="ing glass reveal"><div class="orb" style="--c:${c}"></div><h4>${n}</h4><p>${d}</p></div>`).join('')}
-        </div>
-      </div></section>
-
-      <section class="section" style="padding-top:0"><div class="wrap">
-        <div class="banner reveal">
-          <img src="/assets/img/range-wide.jpg" alt="The full AUREONÉ range" loading="lazy">
-          <div class="banner-card glass glass-strong">
-            <div class="eyebrow">The complete ritual</div>
-            <h3 class="display">Radiant skin. Brighter tomorrows.</h3>
-            <p>Five essentials, one luminous routine — from a gentle rice cleanse to daily SPF 50 protection.</p>
-            <a href="/shop" data-link class="btn btn-gold">Shop the ritual</a>
+      <!-- SECTION 1: HERO EDITORIAL -->
+      <section class="relative w-full overflow-hidden bg-[#F8F5EF] py-12 lg:py-20 border-b border-[#B99A60]/15" id="hero">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <!-- Text Column -->
+            <div class="lg:col-span-6 flex flex-col justify-center space-y-5 z-10">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+                <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">The Art of Radiance</span>
+              </div>
+              <h1 class="font-display-hero text-4xl sm:text-5xl lg:text-[54px] text-[#211D19] tracking-tight font-normal leading-[1.12]">
+                Rituals for <span class="italic font-light text-[#B99A60]">Illuminated</span> Cellular Skin.
+              </h1>
+              <p class="font-body-lg text-[16px] sm:text-[18px] text-[#57524C] font-light leading-relaxed">
+                Pure Care, Real Results, Radiant You. Crafted at the nexus of clinical precision and botanical potency—formulated with fermented rice extract, barrier ceramides, and stabilized bio-vitamins.
+              </p>
+              <div class="pt-1 text-[#211D19] font-display-hero text-[20px] sm:text-[22px] italic text-[#B99A60]/95">
+                “Skin that feels like you, only brighter.”
+              </div>
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+                <a href="#regimen" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
+                  Shop The Ritual
+                </a>
+                <a href="#interactive-3d" class="bg-[#FFFFFF] text-[#211D19] hover:bg-[#F2EFE8] border border-[#B99A60]/30 px-7 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
+                  Discover The Formula
+                </a>
+              </div>
+              <div class="pt-4 flex items-center gap-6 sm:gap-10 text-[#57524C]">
+                <div>
+                  <p class="font-display-hero text-2xl sm:text-3xl font-semibold text-[#211D19]">94%</p>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Clinical Radiance</p>
+                </div>
+                <div class="w-[1px] h-8 bg-[#B99A60]/25"></div>
+                <div>
+                  <p class="font-display-hero text-2xl sm:text-3xl font-semibold text-[#211D19]">5-Step</p>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Harmonized Suite</p>
+                </div>
+                <div class="w-[1px] h-8 bg-[#B99A60]/25"></div>
+                <div>
+                  <p class="font-display-hero text-2xl sm:text-3xl font-semibold text-[#211D19]">100%</p>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Derm Considered</p>
+                </div>
+              </div>
+            </div>
+            <!-- Visual Hero Media -->
+            <div class="lg:col-span-6 relative">
+              <div class="relative bg-[#FFFFFF] p-3 sm:p-4 rounded-2xl shadow-xl border border-[#B99A60]/20" id="hero3dScene">
+                <div class="relative w-full overflow-hidden rounded-xl" id="hero3dCard">
+                  <img alt="Aureoné Complete Ritual Suite on Travertine" class="w-full h-auto max-h-[580px] object-cover rounded-xl" src="/assets/img/hero-ritual-bottles.jpg">
+                  <div class="hero-3d-sheen" id="hero3dSheen"></div>
+                </div>
+                <div class="absolute -bottom-4 -left-3 sm:-left-6 flex flex-col bg-[#FFFFFF]/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-[#B99A60]/25 max-w-[280px] z-20">
+                  <div class="flex items-center gap-1.5 text-[#B99A60] mb-1">
+                    <span class="material-symbols-outlined text-[18px]">verified</span>
+                    <span class="font-label-eyebrow text-[10px] uppercase tracking-widest text-[#211D19] font-semibold">Maison Standard</span>
+                  </div>
+                  <p class="font-body-sm text-[12px] text-[#57524C] leading-snug">
+                    Zero parabens, sulfates, micro-plastics, or synthetic irritants.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div></section>
+      </section>
 
-      ${state.reviews.length ? `<section class="section" style="padding-top:0"><div class="wrap">
-        <div class="section-head reveal"><div class="eyebrow">Kind words</div><h2 class="display">Loved for the glow</h2></div>
-        <div class="quotes">${state.reviews.slice(0, 3).map(r => `
-          <figure class="quote glass reveal" style="margin:0">
-            <div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
-            <blockquote>“${esc(r.text)}”</blockquote>
-            <cite>${esc(r.name)}${r.product ? `<span>${esc(r.product)}</span>` : ''}</cite>
-          </figure>`).join('')}</div>
-      </div></section>` : ''}
 
-      ${newsletter()}`;
+
+      <!-- SECTION 2: COMPLETE 5-STEP REGIMEN -->
+      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24" id="regimen">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+            <div class="max-w-xl">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+                <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.2em] font-semibold">The 5-Step Ceremony</span>
+              </div>
+              <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight">
+                Sequential Daily Regimen
+              </h2>
+              <p class="font-body-md text-[#57524C] mt-2 text-[15px]">
+                Engineered for seamless bio-absorption from morning clarity to nocturnal cellular rest. Every bottle calibrated to preserve barrier harmony.
+              </p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center gap-3">
+              <span class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B] bg-[#FAF8F3] px-3.5 py-1.5 border border-[#B99A60]/20 rounded-full">Sequence: 01 — 05</span>
+            </div>
+          </div>
+
+          <!-- Grid of 5 Products -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <!-- Step 01: Rice Veil -->
+            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 01</span>
+                  <span class="font-label-caption text-[11px] text-[#8C857B]">100 ml • 3.38 fl. oz.</span>
+                </div>
+                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
+                  <img alt="Rice Veil Gentle Daily Face Wash" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-rice-veil.jpg">
+                </div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (128)</span>
+                </div>
+                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Rice Veil</h3>
+                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Gentle Daily Face Wash</p>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
+                  Amino acid cleanser infused with fermented rice extract, provitamin panthenol, and natural hydration glycerin.
+                </p>
+                <div class="mt-3 flex flex-wrap gap-1">
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Rice Extract</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Panthenol</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">pH Balanced</span>
+                </div>
+              </div>
+              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
+                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹649</span>
+                <button data-add="p1" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
+                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 02: Radiance 5 -->
+            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300" id="cellular-serums">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 02</span>
+                  <span class="font-label-caption text-[11px] text-[#8C857B]">30 ml • 1.01 fl. oz.</span>
+                </div>
+                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
+                  <img alt="Radiance 5 Niacinamide Serum" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-radiance-5.jpg">
+                </div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">5.0 (312)</span>
+                </div>
+                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Radiance 5</h3>
+                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Brightening Serum</p>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
+                  Clinical 5% niacinamide with pure fermented rice extract, alpha arbutin, and panthenol 2% for oil & pore control.
+                </p>
+                <div class="mt-3 flex flex-wrap gap-1">
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Niacinamide 5%</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Rice Extract</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Tone Corrector</span>
+                </div>
+              </div>
+              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
+                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹849</span>
+                <button data-add="p6" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
+                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 03: Bright Essence -->
+            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 03</span>
+                  <span class="font-label-caption text-[11px] text-[#8C857B]">30 ml • 1.01 fl. oz.</span>
+                </div>
+                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
+                  <img alt="Bright Essence Vitamin C Serum" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-bright-essence.jpg">
+                </div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (194)</span>
+                </div>
+                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Bright Essence</h3>
+                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Radiance Elixir</p>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
+                  Antioxidant complex of stabilized Vitamin C (3-O Ethyl Ascorbic Acid), ferulic acid, and pure multimolecular hyaluronic acid.
+                </p>
+                <div class="mt-3 flex flex-wrap gap-1">
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Vitamin C</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Ferulic Acid</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Photoprotect</span>
+                </div>
+              </div>
+              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
+                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹1,099</span>
+                <button data-add="p3" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
+                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 04: Velvet Barrier -->
+            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300" id="creams">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 04</span>
+                  <span class="font-label-caption text-[11px] text-[#8C857B]">50 ml • 1.69 fl. oz.</span>
+                </div>
+                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
+                  <img alt="Velvet Barrier Repair Moisturizer" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-velvet-barrier.jpg">
+                </div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (440)</span>
+                </div>
+                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Velvet Barrier</h3>
+                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Barrier Repair Cream</p>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
+                  Deep lipid reinforcement formulated with bio-ceramides, squalane, panthenol, and multi-depth sodium hyaluronate.
+                </p>
+                <div class="mt-3 flex flex-wrap gap-1">
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Ceramides</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Squalane</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Deep Recovery</span>
+                </div>
+              </div>
+              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
+                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹999</span>
+                <button data-add="p4" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
+                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 05: Solar Veil -->
+            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300" id="solar-care">
+              <div>
+                <div class="flex items-center justify-between mb-3">
+                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 05</span>
+                  <span class="font-label-caption text-[11px] text-[#8C857B]">50 ml • 1.69 fl. oz.</span>
+                </div>
+                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
+                  <img alt="Solar Veil Daily Sunscreen SPF 50" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-solar-veil.jpg">
+                </div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (205)</span>
+                </div>
+                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Solar Veil</h3>
+                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">SPF 50 PA++++ Shield</p>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
+                  Weightless broad spectrum shield with ceramides, squalane, and vitamin E. Zero white cast, non-comedogenic velvet finish.
+                </p>
+                <div class="mt-3 flex flex-wrap gap-1">
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">SPF 50 PA++++</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Invisible Finish</span>
+                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Non-Greasy</span>
+                </div>
+              </div>
+              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
+                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹799</span>
+                <button data-add="p5" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
+                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
+                  <span>Add</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: 3D INTERACTIVE FLACON & CELLULAR ATELIER SHOWCASE -->
+      <section class="w-full bg-[#FAF8F3] py-16 lg:py-24 border-y border-[#B99A60]/20 relative overflow-hidden" id="interactive-3d">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="text-center max-w-2xl mx-auto mb-10">
+            <div class="inline-flex items-center gap-2 mb-2">
+              <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+              <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Diagnostic Atelier & 3D Flacon</span>
+              <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+            </div>
+            <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight">
+              Cellular Architecture in 3D Space
+            </h2>
+            <p class="font-body-md text-[#57524C] mt-2">
+              Inspect the tactile geometry of our gold flacon and cellular orbital suspension. Move your cursor to interact with the light-responsive bottle and active essence.
+            </p>
+          </div>
+
+          <div class="bg-[#FFFFFF] border border-[#B99A60]/25 rounded-3xl p-6 sm:p-10 shadow-sm relative">
+            <!-- Interactive Cue Header -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#B99A60]/15">
+              <div class="flex items-center gap-3">
+                <span class="flex h-3 w-3 relative">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B99A60] opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-[#B99A60]"></span>
+                </span>
+                <span class="font-label-button text-[12px] uppercase text-[#211D19] tracking-wider font-semibold">
+                  Interactive 3D Flacon — Move Cursor to Inspect Cellular Architecture
+                </span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="font-label-caption text-[11px] text-[#57524C] uppercase tracking-wider bg-[#FAF8F3] px-3.5 py-1.5 rounded-full border border-[#B99A60]/20">
+                  Three.js Realtime Renderer • 60 FPS
+                </span>
+              </div>
+            </div>
+
+            <!-- 3D Scene Container -->
+            <div class="w-full relative min-h-[480px] h-[480px] flex items-center justify-center my-4 overflow-hidden rounded-2xl bg-[#FAF8F3]/60">
+              <div id="threejs-container-ANIMATION_23" class="w-full h-full bg-transparent block relative z-10" style="width:100%;height:100%"></div>
+            </div>
+
+            <!-- 3D Metrics Feature Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-[#B99A60]/15">
+              <div class="bg-[#FAF8F3] p-5 rounded-xl border border-[#B99A60]/15">
+                <span class="font-label-caption text-[10px] uppercase tracking-wider text-[#B99A60] font-semibold">Core Essence</span>
+                <h4 class="font-display-hero text-[18px] text-[#211D19] mt-1 font-medium">Fermented Rice Elixir</h4>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-1">
+                  Bio-fermented amino matrix preserved in UV-shielded amber-champagne flacon.
+                </p>
+              </div>
+              <div class="bg-[#FAF8F3] p-5 rounded-xl border border-[#B99A60]/15">
+                <span class="font-label-caption text-[10px] uppercase tracking-wider text-[#B99A60] font-semibold">Barrier Integrity</span>
+                <h4 class="font-display-hero text-[18px] text-[#211D19] mt-1 font-medium">Bio-Identical Ceramides</h4>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-1">
+                  Strata-compatible lipid layers providing instant transepidermal water containment.
+                </p>
+              </div>
+              <div class="bg-[#FAF8F3] p-5 rounded-xl border border-[#B99A60]/15">
+                <span class="font-label-caption text-[10px] uppercase tracking-wider text-[#B99A60] font-semibold">Cellular Tone</span>
+                <h4 class="font-display-hero text-[18px] text-[#211D19] mt-1 font-medium">Niacinamide 5% & Vitamin C</h4>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-1">
+                  Targeted melanosome transfer interruption and photo-defense illumination.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: CLINICAL SPOTLIGHT & MASTER DUO -->
+      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="text-center max-w-2xl mx-auto mb-16">
+            <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Clinical Duo Spotlight</span>
+            <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight mt-1">
+              Cellular Equilibrium in Two Steps
+            </h2>
+            <p class="font-body-md text-[#57524C] mt-2">
+              When paired together, Radiance 5 and Velvet Barrier form a continuous lipid-water reservoir that visibly transforms texture and luminosity within 14 days.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <!-- Visual Gallery Pair - Uncropped Cards -->
+            <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div class="bg-[#FFFFFF] p-5 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
+                <div class="w-full h-[320px] bg-[#FAF8F3] rounded-xl p-3 flex items-center justify-center overflow-hidden border border-[#B99A60]/10">
+                  <img alt="Radiance 5 Niacinamide Serum" class="w-full h-full object-contain" src="/assets/img/card-radiance-5.jpg">
+                </div>
+                <div class="pt-4 text-center">
+                  <p class="font-display-hero text-[18px] text-[#211D19]">Radiance 5</p>
+                  <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider">Step 02 • Brightening Serum</p>
+                  <p class="font-body-sm text-[15px] text-[#211D19] font-medium mt-1">₹849</p>
+                </div>
+              </div>
+
+              <div class="bg-[#FFFFFF] p-5 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
+                <div class="w-full h-[320px] bg-[#FAF8F3] rounded-xl p-3 flex items-center justify-center overflow-hidden border border-[#B99A60]/10">
+                  <img alt="Velvet Barrier Repair Cream" class="w-full h-full object-contain" src="/assets/img/card-velvet-barrier.jpg">
+                </div>
+                <div class="pt-4 text-center">
+                  <p class="font-display-hero text-[18px] text-[#211D19]">Velvet Barrier</p>
+                  <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider">Step 04 • Barrier Repair</p>
+                  <p class="font-body-sm text-[15px] text-[#211D19] font-medium mt-1">₹999</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Clinical Efficacy & Ingredient Breakdown -->
+            <div class="lg:col-span-6 space-y-6">
+              <div class="grid grid-cols-3 gap-3 bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm text-center">
+                <div>
+                  <div class="font-display-hero text-3xl sm:text-4xl font-normal text-[#B99A60]">94%</div>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#211D19] font-semibold mt-1">Visible Luminosity</p>
+                  <p class="font-body-sm text-[#57524C] text-[12px] mt-0.5">Evens tone in 14 days</p>
+                </div>
+                <div class="border-x border-[#B99A60]/15 px-2">
+                  <div class="font-display-hero text-3xl sm:text-4xl font-normal text-[#B99A60]">98%</div>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#211D19] font-semibold mt-1">Barrier Strength</p>
+                  <p class="font-body-sm text-[#57524C] text-[12px] mt-0.5">Validated TEWL control</p>
+                </div>
+                <div>
+                  <div class="font-display-hero text-3xl sm:text-4xl font-normal text-[#B99A60]">0%</div>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#211D19] font-semibold mt-1">Pore Congestion</p>
+                  <p class="font-body-sm text-[#57524C] text-[12px] mt-0.5">Non-comedogenic lab test</p>
+                </div>
+              </div>
+
+              <!-- Master Duo Bundle Card in INR -->
+              <div class="bg-[#FAF8F3] p-6 rounded-2xl border border-[#B99A60]/25">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="font-label-eyebrow text-[10px] uppercase text-[#B99A60] tracking-widest font-semibold">Special Harmonized Pairing</span>
+                  <span class="font-label-caption text-[11px] text-[#FFFFFF] bg-[#B99A60] px-2.5 py-0.5 rounded font-medium">Save ₹250</span>
+                </div>
+                <h3 class="font-display-hero text-[22px] text-[#211D19]">The Equilibrium Master Duo</h3>
+                <p class="font-body-sm text-[13px] text-[#57524C] mt-1 leading-relaxed">
+                  Includes Radiance 5 Niacinamide Serum (30ml) + Velvet Barrier Repair Moisturizer (50ml). The essential morning and evening synergy.
+                </p>
+                <div class="mt-4 flex items-center justify-between">
+                  <div class="flex items-baseline gap-2.5">
+                    <span class="font-display-hero text-[24px] text-[#211D19] font-medium">₹1,598</span>
+                    <span class="font-body-md text-[15px] text-[#8C857B] line-through">₹1,848</span>
+                  </div>
+                  <button data-add-bundle="duo" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-6 py-3 rounded font-label-button text-[11px] uppercase tracking-wider transition-colors shadow-sm">
+                    Acquire Duo
+                  </button>
+                </div>
+              </div>
+
+              <!-- Active Details -->
+              <div class="space-y-2.5">
+                <div class="bg-[#FFFFFF] p-4 rounded-xl border border-[#B99A60]/20">
+                  <div class="flex items-center gap-2 text-[#211D19]">
+                    <span class="w-2 h-2 rounded-full bg-[#B99A60]"></span>
+                    <span class="font-label-button text-[12px] uppercase font-semibold">Niacinamide 5% & Alpha Arbutin</span>
+                  </div>
+                  <p class="text-[#57524C] font-body-sm text-[13px] mt-1.5 pl-4 leading-relaxed">
+                    Regulates excessive sebum while blocking pigment transfer, fading stubborn post-blemish spots with no stinging.
+                  </p>
+                </div>
+                <div class="bg-[#FFFFFF] p-4 rounded-xl border border-[#B99A60]/20">
+                  <div class="flex items-center gap-2 text-[#211D19]">
+                    <span class="w-2 h-2 rounded-full bg-[#B99A60]"></span>
+                    <span class="font-label-button text-[12px] uppercase font-semibold">Bio-Ceramide NP & Plant Squalane</span>
+                  </div>
+                  <p class="text-[#57524C] font-body-sm text-[13px] mt-1.5 pl-4 leading-relaxed">
+                    Lipid complex structurally identical to the natural stratum corneum, locking deep hydration with a featherweight velvet finish.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 5: THE COMPLETE 5-STEP RADIANCE SUITE (MASTER SET) IN INR -->
+      <section class="w-full bg-[#FAF8F3] py-16 lg:py-24 border-t border-[#B99A60]/20">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="bg-[#FFFFFF] rounded-3xl border border-[#B99A60]/25 shadow-sm p-6 sm:p-12">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              <!-- Bundle Image Showcase -->
+              <div class="lg:col-span-7">
+                <div class="relative rounded-2xl overflow-hidden bg-[#FAF8F3] border border-[#B99A60]/15 p-4 sm:p-6 flex items-center justify-center">
+                  <img alt="Aureoné Complete 5-Step Radiant Collection Set" class="w-full h-auto max-h-[500px] object-contain rounded-xl" src="/assets/img/range-wide.jpg">
+                  <div class="absolute top-4 left-4 bg-[#211D19] text-[#FFFFFF] px-3.5 py-1.5 rounded font-label-eyebrow text-[10px] uppercase tracking-widest">
+                    The Master Set • Complete Ritual
+                  </div>
+                  <div class="absolute bottom-4 right-4 bg-[#B99A60] text-[#FFFFFF] px-3.5 py-1.5 rounded font-label-button text-[11px] uppercase tracking-wider font-semibold">
+                    Save ₹800 (18% Off)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bundle Purchase Card -->
+              <div class="lg:col-span-5 flex flex-col justify-center space-y-5">
+                <div>
+                  <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Maison Privilège</span>
+                  <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight mt-1 leading-tight">
+                    The Complete 5-Step Radiance Suite
+                  </h2>
+                  <div class="flex items-center gap-2 mt-2.5">
+                    <div class="flex items-center text-[#B99A60]">
+                      <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                      <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                      <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                      <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                      <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                    </div>
+                    <span class="font-label-caption text-[11px] text-[#57524C] font-semibold">4.98 / 5 (870+ Verified Reviews)</span>
+                  </div>
+                </div>
+                <p class="font-body-md text-[15px] text-[#57524C] leading-relaxed">
+                  The complete, harmonized protocol designed to cleanse, illuminate, nourish, repair, and shield your skin with zero ingredient clashes.
+                </p>
+
+                <!-- Inclusions Checklist -->
+                <div class="space-y-2 py-2 border-y border-[#B99A60]/15">
+                  <div class="flex items-center gap-2.5 text-[#211D19]">
+                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
+                    <span class="font-body-sm text-[13px] font-medium">01. Rice Veil Daily Gentle Wash (100ml)</span>
+                  </div>
+                  <div class="flex items-center gap-2.5 text-[#211D19]">
+                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
+                    <span class="font-body-sm text-[13px] font-medium">02. Radiance 5 Niacinamide Serum (30ml)</span>
+                  </div>
+                  <div class="flex items-center gap-2.5 text-[#211D19]">
+                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
+                    <span class="font-body-sm text-[13px] font-medium">03. Bright Essence Radiance Elixir (30ml)</span>
+                  </div>
+                  <div class="flex items-center gap-2.5 text-[#211D19]">
+                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
+                    <span class="font-body-sm text-[13px] font-medium">04. Velvet Barrier Repair Moisturizer (50ml)</span>
+                  </div>
+                  <div class="flex items-center gap-2.5 text-[#211D19]">
+                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
+                    <span class="font-body-sm text-[13px] font-medium">05. Solar Veil Daily Sunscreen SPF 50 (50ml)</span>
+                  </div>
+                  <div class="flex items-center gap-2.5 text-[#B99A60] pt-1 font-medium">
+                    <span class="material-symbols-outlined text-[18px]">card_giftcard</span>
+                    <span class="font-body-sm text-[13px]">Complimentary Gold Spatula & Organic Travel Pouch</span>
+                  </div>
+                </div>
+
+                <!-- Price & CTA in INR -->
+                <div class="pt-2">
+                  <div class="flex items-baseline gap-3 mb-4">
+                    <span class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal">₹3,595</span>
+                    <span class="font-display-hero text-2xl text-[#8C857B] line-through">₹4,395</span>
+                    <span class="font-label-caption text-[11px] text-[#B99A60] uppercase font-semibold">Free Express Courier India</span>
+                  </div>
+                  <div class="flex flex-col sm:flex-row gap-3">
+                    <button data-add-bundle="suite" class="flex-1 bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm">
+                      <span class="material-symbols-outlined text-[18px]">lock</span>
+                      <span>Acquire Complete Suite</span>
+                    </button>
+                  </div>
+                  <p class="font-label-caption text-[11px] text-[#57524C] text-center mt-3">
+                    30-Day Sensorial Assurance • Complimentary exchanges across India
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 6: EDITORIAL BRAND STORY -->
+      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+            <!-- Philosophy Manifesto -->
+            <div class="lg:col-span-6 space-y-6">
+              <div class="flex items-center gap-3">
+                <span class="w-8 h-[1px] bg-[#B99A60]"></span>
+                <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Our Philosophy</span>
+              </div>
+              <h2 class="font-display-hero text-3xl sm:text-4xl lg:text-5xl text-[#211D19] font-normal leading-tight tracking-tight">
+                Inspired by Nature.<br/>
+                <span class="italic font-light text-[#B99A60]">Backed by Clinical Science.</span>
+              </h2>
+              <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm">
+                <p class="font-display-hero italic text-[19px] text-[#211D19] leading-relaxed">
+                  “Skincare crafted to honor your skin’s innate architecture—never forcing it, but awakening its inherent cellular radiance.”
+                </p>
+                <div class="flex items-center gap-3 mt-4 pt-3 border-t border-[#B99A60]/15">
+                  <span class="font-label-button text-[11px] text-[#B99A60] uppercase tracking-wider font-semibold">Maison Aureoné Laboratories</span>
+                  <span class="text-[#8C857B]">•</span>
+                  <span class="font-label-caption text-[11px] text-[#57524C]">Paris • Mumbai</span>
+                </div>
+              </div>
+              <p class="font-body-md text-[15px] text-[#57524C] leading-relaxed">
+                Founded on the belief that everyday care should be both clinical and ceremonial. Sourcing slow-harvested botanicals subjected to peer-reviewed dermatological evaluations to ensure uncompromising performance.
+              </p>
+
+              <!-- Brand Badges -->
+              <div class="grid grid-cols-2 gap-4 pt-2">
+                <div class="bg-[#FFFFFF] p-4 rounded-xl border border-[#B99A60]/20 flex items-start gap-3">
+                  <span class="material-symbols-outlined text-[#B99A60] text-[22px] mt-0.5">eco</span>
+                  <div>
+                    <h4 class="font-label-button text-[11px] uppercase text-[#211D19] font-semibold">Paraben & Sulfate Free</h4>
+                    <p class="font-body-sm text-[12px] text-[#57524C] mt-0.5">Zero micro-fillers or endocrine disruptors.</p>
+                  </div>
+                </div>
+                <div class="bg-[#FFFFFF] p-4 rounded-xl border border-[#B99A60]/20 flex items-start gap-3">
+                  <span class="material-symbols-outlined text-[#B99A60] text-[22px] mt-0.5">cruelty_free</span>
+                  <div>
+                    <h4 class="font-label-button text-[11px] uppercase text-[#211D19] font-semibold">Leaping Bunny Certified</h4>
+                    <p class="font-body-sm text-[12px] text-[#57524C] mt-0.5">100% cruelty-free, ethical botanical harvests.</p>
+                  </div>
+                </div>
+                <div class="bg-[#FFFFFF] p-4 rounded-xl border border-[#B99A60]/20 flex items-start gap-3">
+                  <span class="material-symbols-outlined text-[#B99A60] text-[22px] mt-0.5">biotech</span>
+                  <div>
+                    <h4 class="font-label-button text-[11px] uppercase text-[#211D19] font-semibold">Biomimetic Actives</h4>
+                    <p class="font-body-sm text-[12px] text-[#57524C] mt-0.5">Bio-identical ceramides and stabilized vitamins.</p>
+                  </div>
+                </div>
+                <div class="bg-[#FFFFFF] p-4 rounded-xl border border-[#B99A60]/20 flex items-start gap-3">
+                  <span class="material-symbols-outlined text-[#B99A60] text-[22px] mt-0.5">recycling</span>
+                  <div>
+                    <h4 class="font-label-button text-[11px] uppercase text-[#211D19] font-semibold">Sustainable Glass Flacons</h4>
+                    <p class="font-body-sm text-[12px] text-[#57524C] mt-0.5">Infinitely recyclable and UV-shielded vessels.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Atmospheric Uncropped Photography Grid -->
+            <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div class="space-y-5">
+                <div class="bg-[#FFFFFF] p-3 rounded-2xl border border-[#B99A60]/20 shadow-sm overflow-hidden">
+                  <img alt="Aureoné Brand Monogram" class="w-full h-64 object-contain rounded-xl bg-[#FAF8F3] p-2" src="/assets/img/monogram.png">
+                </div>
+                <div class="bg-[#FFFFFF] p-3 rounded-2xl border border-[#B99A60]/20 shadow-sm overflow-hidden">
+                  <img alt="Velvet Barrier Cream container" class="w-full h-52 object-contain rounded-xl bg-[#FAF8F3] p-2" src="/assets/img/card-velvet-barrier.jpg">
+                </div>
+              </div>
+              <div class="space-y-5 sm:pt-8">
+                <div class="bg-[#FFFFFF] p-3 rounded-2xl border border-[#B99A60]/20 shadow-sm overflow-hidden">
+                  <img alt="Radiance Skin Philosophy" class="w-full h-64 object-cover rounded-xl bg-[#FAF8F3]" src="/assets/img/philosophy-portrait.jpg">
+                </div>
+                <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/25 shadow-sm text-center">
+                  <span class="font-label-eyebrow text-[10px] uppercase tracking-widest text-[#B99A60] font-semibold">Diagnostic Atelier</span>
+                  <p class="font-display-hero text-[19px] text-[#211D19] mt-1 font-medium">Bespoke Skin Profiling</p>
+                  <p class="font-body-sm text-[13px] text-[#57524C] mt-1">2-minute personalized formula match</p>
+                  <a href="/ritual" data-link class="mt-4 block w-full bg-[#FAF8F3] hover:bg-[#211D19] hover:text-[#FFFFFF] text-[#211D19] border border-[#B99A60]/25 px-4 py-2.5 rounded font-label-button text-[11px] uppercase tracking-wider transition-colors">
+                    Start Skin Diagnostic
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 7: VOICES OF RADIANCE (REVIEWS) -->
+      <section class="w-full bg-[#FAF8F3] py-16 lg:py-20 border-t border-[#B99A60]/20">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12 text-center">
+          <div class="inline-flex items-center gap-2 mb-3">
+            <span class="w-8 h-[1px] bg-[#B99A60]"></span>
+            <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Voices of Radiance</span>
+            <span class="w-8 h-[1px] bg-[#B99A60]"></span>
+          </div>
+          <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight">Verified Ritual Experiences</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 text-left">
+            <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-3">
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
+                <p class="font-body-md text-[14px] text-[#211D19] italic leading-relaxed">
+                  “Radiance 5 smoothed persistent pigmentation around my cheekbones within 3 weeks. It absorbs like morning dew with zero stickiness.”
+                </p>
+              </div>
+              <div class="mt-6 pt-4 border-t border-[#B99A60]/15 flex items-center justify-between">
+                <div>
+                  <p class="font-label-button text-[12px] uppercase text-[#211D19] font-semibold">Ananya R.</p>
+                  <p class="font-label-caption text-[11px] text-[#8C857B]">Verified Collector • Mumbai</p>
+                </div>
+                <span class="font-label-caption text-[10px] text-[#B99A60] uppercase bg-[#FAF8F3] px-2.5 py-1 rounded border border-[#B99A60]/20 font-medium">Radiance 5</span>
+              </div>
+            </div>
+
+            <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-3">
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
+                <p class="font-body-md text-[14px] text-[#211D19] italic leading-relaxed">
+                  “Velvet Barrier saved my compromised skin barrier during winter travel. Cushiony, rich yet perfectly breathable underneath daily makeup.”
+                </p>
+              </div>
+              <div class="mt-6 pt-4 border-t border-[#B99A60]/15 flex items-center justify-between">
+                <div>
+                  <p class="font-label-button text-[12px] uppercase text-[#211D19] font-semibold">Priya K.</p>
+                  <p class="font-label-caption text-[11px] text-[#8C857B]">Verified Collector • New Delhi</p>
+                </div>
+                <span class="font-label-caption text-[10px] text-[#B99A60] uppercase bg-[#FAF8F3] px-2.5 py-1 rounded border border-[#B99A60]/20 font-medium">Velvet Barrier</span>
+              </div>
+            </div>
+
+            <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="flex items-center gap-1 text-[#B99A60] mb-3">
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                </div>
+                <p class="font-body-md text-[14px] text-[#211D19] italic leading-relaxed">
+                  “Solar Veil has absolute zero white cast on warm Indian skin tones. Melts like an exquisite serum while offering true SPF 50 PA++++ protection.”
+                </p>
+              </div>
+              <div class="mt-6 pt-4 border-t border-[#B99A60]/15 flex items-center justify-between">
+                <div>
+                  <p class="font-label-button text-[12px] uppercase text-[#211D19] font-semibold">Devika M.</p>
+                  <p class="font-label-caption text-[11px] text-[#8C857B]">Verified Collector • Bengaluru</p>
+                </div>
+                <span class="font-label-caption text-[10px] text-[#B99A60] uppercase bg-[#FAF8F3] px-2.5 py-1 rounded border border-[#B99A60]/20 font-medium">Solar Veil</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NEWSLETTER SECTION -->
+      <section class="w-full bg-[#FAF8F3] py-14 border-t border-[#B99A60]/20">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+          <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">The Private Gazette</span>
+          <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight mt-1">Receive Private Allocations</h2>
+          <p class="font-body-md text-[15px] text-[#57524C] mt-2 max-w-xl mx-auto">
+            Invitations to slow botanical harvests, seasonal formulations, and private clinical research papers.
+          </p>
+          <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mt-6" data-sub>
+            <input class="flex-1 bg-[#FFFFFF] border border-[#B99A60]/30 px-5 py-3.5 rounded text-[#211D19] font-body-sm text-[14px] placeholder:text-[#8C857B] focus:outline-none focus:ring-1 focus:ring-[#B99A60]" name="email" placeholder="Enter your email address" type="email" required>
+            <button class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-3.5 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shrink-0 shadow-sm" type="submit">
+              Subscribe
+            </button>
+          </form>
+          <p class="font-label-caption text-[11px] text-[#8C857B] mt-3">Strict confidentiality. Unsubscribe at any time.</p>
+        </div>
+      </section>`;
     },
 
     shop() {
@@ -304,17 +950,8 @@
         <p>Every formula is clean, conscious and effective — luxury for every day.</p>
       </div></section>
       ${state.offers.length ? offersStrip() : ''}
-      <section class="wrap" style="padding-bottom:40px">
-        <div class="toolbar glass">
-          <div class="filters">${cats.map(c => `<button class="filter${c === active ? ' on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>
-          <select class="select" id="sort" aria-label="Sort products">
-            <option value="featured">Featured</option>
-            <option value="low">Price: low to high</option>
-            <option value="high">Price: high to low</option>
-            <option value="name">Name A–Z</option>
-          </select>
-        </div>
-        <div class="grid" id="shopGrid"></div>
+      <section class="wrap" style="padding-bottom:40px;padding-top:20px">
+        <div class="catalog-grid" id="shopGrid"></div>
       </section>
       ${newsletter()}`;
     },
@@ -392,7 +1029,17 @@
           <p>Cleanse away the day with <b>Rice Veil</b>, rebalance with <b>Radiance 5</b> niacinamide serum, and restore overnight with <b>Velvet Barrier</b>.</p>
           <a href="/shop" data-link class="btn btn-gold" style="margin-top:14px">Build your ritual</a>
         </div>
-        <div class="split-media glass reveal"><img src="/assets/img/range-tall-1.jpg" alt="AUREONÉ ritual products" loading="lazy"></div>
+        <div class="split-media glass reveal"><img src="/assets/img/model-female-ritual.jpg" alt="Woman performing her AUREONÉ morning ritual" loading="lazy"></div>
+      </div></section>
+
+      <section class="section" style="padding-top:0"><div class="wrap split" style="direction:rtl">
+        <div class="reveal" style="direction:ltr">
+          <div class="eyebrow">For him</div>
+          <h2 class="display">Skincare without <em class="gold-text">compromise</em></h2>
+          <p>The AUREONÉ ritual isn't gendered — it's universal. Clean actives that work with every skin type, every lifestyle. Effective, no-fuss, and designed for those who value their skin.</p>
+          <a href="/shop" data-link class="btn btn-gold" style="margin-top:14px">Shop the collection</a>
+        </div>
+        <div class="split-media glass reveal" style="direction:ltr"><img src="/assets/img/model-male-ritual.jpg" alt="Man performing his AUREONÉ evening ritual" loading="lazy"></div>
       </div></section>
       ${newsletter()}`;
     },
@@ -406,12 +1053,12 @@
         <p>We don’t formulate for a moment of glow. We formulate for the ritual behind healthy skin.</p>
       </div></section>
       <section class="section" style="padding-top:20px"><div class="wrap split">
-        <div class="split-media glass reveal"><img src="${esc(s.aboutImage)}" alt="AUREONÉ collection" loading="lazy"></div>
+        <div class="split-media glass reveal"><img src="/assets/img/model-female.jpg" alt="Woman with radiant skin using AUREONÉ" loading="lazy"></div>
         <div class="reveal">
           <div class="eyebrow">The house of AUREONÉ</div>
           <h2 class="display">${esc(s.aboutTitle)}</h2>
           <p>${esc(s.aboutText)}</p>
-          <p class="script" style="font-size:38px;margin:18px 0 0">One ritual at a time</p>
+          <p class="script" style="font-size:26px;margin:14px 0 0">One ritual at a time</p>
         </div>
       </div></section>
       <section class="section" style="padding-top:0"><div class="wrap">
@@ -426,18 +1073,28 @@
       <section class="section" style="padding-top:0"><div class="wrap">
         <div class="section-head reveal">
           <div class="eyebrow">The one-line pitch</div>
-          <h2 class="display" style="font-size:clamp(26px, 3.4vw, 42px);font-style:italic;line-height:1.25">“AUREONÉ creates thoughtfully formulated modern skincare where effective actives meet the ritual of skin health — helping you build healthier, more radiant skin, one ritual at a time.”</h2>
+          <h2 class="display" style="font-size:clamp(20px, 2.4vw, 28px);font-style:italic;line-height:1.45;max-width:780px;margin:0 auto">“AUREONÉ creates thoughtfully formulated modern skincare where effective actives meet considered daily care — helping you build healthier, more radiant-looking skin, one ritual at a time.”</h2>
         </div>
       </div></section>
       <section class="section" style="padding-top:0"><div class="wrap">
-        <div class="banner reveal" style="min-height:520px">
-          <img src="/assets/img/range-square-1.jpg" alt="" loading="lazy">
+        <div class="banner reveal" style="min-height:360px">
+          <img src="/assets/img/models-lifestyle.jpg" alt="Couple enjoying the AUREONÉ skincare ritual" loading="lazy">
           <div class="banner-card glass glass-strong">
-            <div class="eyebrow">Purposeful · Effective · Ritualistic</div>
+            <div class="eyebrow">For him · For her · For radiance</div>
             <h3 class="display">The ritual begins here.</h3>
-            <p>Discover the essentials of the AUREONÉ ritual.</p>
+            <p>Designed for every skin — discover the essentials of the AUREONÉ ritual.</p>
             <a href="/shop" data-link class="btn btn-gold">Shop now</a>
           </div>
+        </div>
+      </div></section>
+
+      <section class="section" style="padding-top:0"><div class="wrap split">
+        <div class="split-media glass reveal"><img src="/assets/img/model-male.jpg" alt="Man with clear, healthy skin using AUREONÉ" loading="lazy"></div>
+        <div class="reveal">
+          <div class="eyebrow">His story</div>
+          <h2 class="display">Skincare for <em class="gold-text">everyone</em></h2>
+          <p>At AUREONÉ, we believe radiant, healthy skin has no gender. Our formulations work beautifully across all skin types — because great skincare should be universal.</p>
+          <p class="script" style="font-size:26px;margin:14px 0 0">Radiance for all</p>
         </div>
       </div></section>`;
     },
@@ -568,11 +1225,12 @@
       ['Cleanse', 'Lift away the day with a gentle, rice-powered cleanse that respects your barrier.'],
       ['Treat', 'Target tone, texture and radiance with concentrated niacinamide or vitamin C.'],
       ['Moisturize', 'Restore and seal in hydration with ceramides and squalane.'],
-      ['Protect', 'Shield your glow from UVA and UVB with weightless SPF 50 PA++++.']
+      ['Protect', 'Shield your glow from UVA and UVB with weightless SPF 50 PA++++.'],
+      ['Glow', 'Complete your ritual with consistent care for a healthy, radiant-looking complexion.']
     ];
     return `<div class="ritual">${steps.map(([cat, text], i) => {
       const p = find(cat);
-      return `<div class="step glass reveal"><div class="num">0${i + 1}</div><h3>${cat}</h3><p>${text}</p>${p ? `<a href="/product/${esc(p.slug)}" data-link>${esc(p.name)} →</a>` : ''}</div>`;
+      return `<div class="step reveal"><div class="num">0${i + 1}</div><h3>${cat}</h3><p>${text}</p>${p ? `<a href="/product/${esc(p.slug)}" data-link>${esc(p.name)} →</a>` : '<span class="step-meta">Consistent Care</span>'}</div>`;
     }).join('')}</div>`;
   }
 
@@ -592,26 +1250,12 @@
 
   /* ---------- page behaviours ---------- */
   function mountShop() {
-    const params = new URLSearchParams(location.search);
-    let cat = params.get('c') || 'All';
-    const sortSel = $('#sort');
     const draw = () => {
-      let list = state.products.filter(p => cat === 'All' || p.category === cat);
-      const by = sortSel.value;
-      if (by === 'low') list.sort((a, b) => lowestPrice(a) - lowestPrice(b));
-      if (by === 'high') list.sort((a, b) => lowestPrice(b) - lowestPrice(a));
-      if (by === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
-      if (by === 'featured') list.sort((a, b) => (b.featured - a.featured));
-      $('#shopGrid').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">No products in this category yet.</div>';
+      let list = [...state.products];
+      list.sort((a, b) => (b.featured - a.featured));
+      $('#shopGrid').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">No products in the collection yet.</div>';
       observeReveal();
     };
-    $$('.filter').forEach(b => b.addEventListener('click', () => {
-      cat = b.dataset.cat;
-      $$('.filter').forEach(x => x.classList.toggle('on', x === b));
-      history.replaceState(null, '', cat === 'All' ? '/shop' : `/shop?c=${encodeURIComponent(cat)}`);
-      draw();
-    }));
-    sortSel.addEventListener('change', draw);
     draw();
   }
 
@@ -749,9 +1393,280 @@
     });
   }
 
+  /* ---------- hero 3d animation ---------- */
+  function initHero3d() {
+    const scene = $('#hero3dScene');
+    const card = $('#hero3dCard');
+    const sheen = $('#hero3dSheen');
+    if (!scene || !card) return;
+
+    let rect = null;
+    let leaveTimer = null;
+
+    const onEnter = () => {
+      clearTimeout(leaveTimer);
+      rect = scene.getBoundingClientRect();
+      card.classList.add('is-interacting');
+      card.style.transition = 'transform 0.12s ease-out';
+      if (sheen) sheen.style.opacity = '1';
+    };
+
+    const onMove = e => {
+      if (!rect) rect = scene.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      const px = (mouseX / rect.width) - 0.5;
+      const py = (mouseY / rect.height) - 0.5;
+
+      const rotateY = px * 24;
+      const rotateX = -py * 18;
+
+      card.style.transform = `perspective(1200px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.025, 1.025, 1.025)`;
+
+      if (sheen) {
+        const sx = ((px + 0.5) * 100).toFixed(1);
+        const sy = ((py + 0.5) * 100).toFixed(1);
+        sheen.style.background = `radial-gradient(circle at ${sx}% ${sy}%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 65%)`;
+      }
+    };
+
+    const onLeave = () => {
+      card.style.transition = 'transform 0.75s var(--ease)';
+      card.style.transform = 'perspective(1200px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+      if (sheen) sheen.style.opacity = '0';
+      leaveTimer = setTimeout(() => {
+        card.style.transition = '';
+        card.classList.remove('is-interacting');
+      }, 750);
+      rect = null;
+    };
+
+    scene.addEventListener('mouseenter', onEnter);
+    scene.addEventListener('mousemove', onMove);
+    scene.addEventListener('mouseleave', onLeave);
+
+    scene.addEventListener('touchmove', e => {
+      if (e.touches && e.touches[0]) {
+        onEnter();
+        onMove(e.touches[0]);
+      }
+    }, { passive: true });
+    scene.addEventListener('touchend', onLeave);
+  }
+
+  /* ---------- three.js stitch scene ---------- */
+  let threeJsAnimId = null;
+  function initThreeJsScene() {
+    if (threeJsAnimId) {
+      cancelAnimationFrame(threeJsAnimId);
+      threeJsAnimId = null;
+    }
+    const container = document.getElementById('threejs-container-ANIMATION_23') || document.getElementById('threejs-container');
+    if (!container || typeof THREE === 'undefined') return;
+
+    container.innerHTML = '';
+    const width = container.clientWidth || container.offsetWidth || 800;
+    const height = container.clientHeight || container.offsetHeight || 480;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+    camera.position.set(0, 0, 7.5);
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    if (THREE.ACESFilmicToneMapping) {
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.15;
+    }
+    container.appendChild(renderer.domElement);
+
+    // Lighting setup - Soft champagne studio glow
+    const ambientLight = new THREE.AmbientLight(0xfff7ed, 1.8);
+    scene.add(ambientLight);
+
+    const mainKeyLight = new THREE.DirectionalLight(0xfff1d6, 2.8);
+    mainKeyLight.position.set(5, 8, 6);
+    scene.add(mainKeyLight);
+
+    const rimGoldLight = new THREE.DirectionalLight(0xd4af37, 2.2);
+    rimGoldLight.position.set(-6, -4, -4);
+    scene.add(rimGoldLight);
+
+    const warmPoint = new THREE.PointLight(0xe8c872, 3, 20);
+    warmPoint.position.set(0, 0, 3);
+    scene.add(warmPoint);
+
+    // Master Group
+    const masterGroup = new THREE.Group();
+    scene.add(masterGroup);
+
+    // Materials
+    const goldMaterial = new THREE.MeshStandardMaterial({
+      color: 0xc8a265,
+      metalness: 0.85,
+      roughness: 0.22,
+      wireframe: false
+    });
+
+    const glassMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xfdfaf5,
+      metalness: 0.05,
+      roughness: 0.1,
+      transmission: 0.85,
+      thickness: 1.2,
+      transparent: true,
+      opacity: 0.88,
+      ior: 1.48
+    });
+
+    const innerCoreMaterial = new THREE.MeshStandardMaterial({
+      color: 0xdfb76c,
+      emissive: 0x7c5e20,
+      emissiveIntensity: 0.4,
+      metalness: 0.9,
+      roughness: 0.15
+    });
+
+    // Central Radiance Glass Flacon / Vial Form
+    const bottleGeo = new THREE.CylinderGeometry(0.75, 0.82, 2.6, 36);
+    const bottleMesh = new THREE.Mesh(bottleGeo, glassMaterial);
+    masterGroup.add(bottleMesh);
+
+    // Inner Luminous Core (Serum Essence)
+    const coreGeo = new THREE.CylinderGeometry(0.48, 0.52, 2.0, 32);
+    const coreMesh = new THREE.Mesh(coreGeo, innerCoreMaterial);
+    bottleMesh.add(coreMesh);
+
+    // Gold Dropper Collar & Cap
+    const capBaseGeo = new THREE.CylinderGeometry(0.76, 0.76, 0.45, 32);
+    const capBaseMesh = new THREE.Mesh(capBaseGeo, goldMaterial);
+    capBaseMesh.position.y = 1.5;
+    bottleMesh.add(capBaseMesh);
+
+    const dropperTopGeo = new THREE.SphereGeometry(0.38, 24, 24);
+    dropperTopGeo.scale(1, 1.4, 1);
+    const dropperTopMesh = new THREE.Mesh(dropperTopGeo, new THREE.MeshStandardMaterial({
+      color: 0xfcfaf7,
+      roughness: 0.35,
+      metalness: 0.1
+    }));
+    dropperTopMesh.position.y = 1.95;
+    bottleMesh.add(dropperTopMesh);
+
+    // Luxury Orbital Rings (Cellular Harmony)
+    const ringGeo1 = new THREE.TorusGeometry(1.95, 0.035, 16, 100);
+    const ringMesh1 = new THREE.Mesh(ringGeo1, goldMaterial);
+    ringMesh1.rotation.x = Math.PI / 3;
+    ringMesh1.rotation.y = Math.PI / 6;
+    masterGroup.add(ringMesh1);
+
+    const ringGeo2 = new THREE.TorusGeometry(2.35, 0.025, 16, 100);
+    const ringMesh2 = new THREE.Mesh(ringGeo2, goldMaterial);
+    ringMesh2.rotation.x = -Math.PI / 4;
+    ringMesh2.rotation.y = Math.PI / 4;
+    masterGroup.add(ringMesh2);
+
+    // Floating Cellular / Golden Micro-Spheres
+    const particleCount = 42;
+    const particleGroup = new THREE.Group();
+    masterGroup.add(particleGroup);
+
+    const sphereGeo = new THREE.SphereGeometry(0.065, 16, 16);
+    const particleData = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const pMesh = new THREE.Mesh(sphereGeo, i % 2 === 0 ? goldMaterial : glassMaterial);
+      const radius = 1.3 + Math.random() * 1.8;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos((Math.random() * 2) - 1);
+
+      pMesh.position.x = radius * Math.sin(phi) * Math.cos(theta);
+      pMesh.position.y = (radius * Math.sin(phi) * Math.sin(theta)) * 0.9;
+      pMesh.position.z = radius * Math.cos(phi);
+
+      const scale = 0.4 + Math.random() * 0.85;
+      pMesh.scale.set(scale, scale, scale);
+
+      particleGroup.add(pMesh);
+      particleData.push({
+        mesh: pMesh,
+        speed: 0.004 + Math.random() * 0.008,
+        axisY: Math.random() * 0.005,
+        baseY: pMesh.position.y,
+        offset: Math.random() * Math.PI * 2
+      });
+    }
+
+    // Mouse Interaction
+    let targetRotX = 0;
+    let targetRotY = 0;
+
+    const onMouseMove = e => {
+      if (!container.isConnected) return;
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const mouseX = (x / (rect.width || 1)) * 2 - 1;
+      const mouseY = -(y / (rect.height || 1)) * 2 + 1;
+      targetRotY = mouseX * 0.45;
+      targetRotX = -mouseY * 0.35;
+    };
+
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+
+    // Resize handler
+    const onResize = () => {
+      if (!container.isConnected) return;
+      const w = container.clientWidth || container.offsetWidth || 800;
+      const h = container.clientHeight || container.offsetHeight || 480;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    };
+    window.addEventListener('resize', onResize, { passive: true });
+
+    // Animation Loop
+    const clock = new THREE.Clock();
+
+    function animate() {
+      if (!container.isConnected) {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('resize', onResize);
+        return;
+      }
+      threeJsAnimId = requestAnimationFrame(animate);
+      const elapsed = clock.getElapsedTime();
+
+      // Smooth subtle floating & easing toward mouse
+      masterGroup.rotation.y += (targetRotY - masterGroup.rotation.y) * 0.05 + 0.004;
+      masterGroup.rotation.x += (targetRotX - masterGroup.rotation.x) * 0.05;
+      masterGroup.position.y = Math.sin(elapsed * 1.2) * 0.12;
+
+      // Orbit rings counter rotations
+      ringMesh1.rotation.z += 0.006;
+      ringMesh2.rotation.z -= 0.005;
+      ringMesh1.rotation.y = Math.PI / 6 + Math.sin(elapsed * 0.8) * 0.15;
+
+      // Floating golden particles
+      particleGroup.rotation.y += 0.003;
+      particleData.forEach(p => {
+        p.mesh.position.y = p.baseY + Math.sin(elapsed * 2 + p.offset) * 0.08;
+      });
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  }
+
+  function mountHome() {
+    initHero3d();
+    initThreeJsScene();
+  }
+
   /* ---------- router ---------- */
   const routes = [
-    [/^\/$/, () => pages.home()],
+    [/^\/$/, () => pages.home(), mountHome],
     [/^\/shop\/?$/, () => pages.shop(), mountShop],
     [/^\/product\/([^/]+)\/?$/, m => pages.product(decodeURIComponent(m[1])), mountProduct],
     [/^\/ritual\/?$/, () => pages.ritual()],
@@ -764,7 +1679,7 @@
 
   function render() {
     const path = location.pathname;
-    document.title = 'AUREONÉ — The Ritual of Skin Health';
+    document.title = 'AUREONÉ — The Art of Radiance';
     let html = notFound(), mount = null;
     for (const [re, view, m] of routes) {
       const match = path.match(re);
@@ -772,17 +1687,18 @@
     }
     app.innerHTML = `<div class="page-enter">${html}</div>`;
     mount?.();
-    $$('.nav-links a').forEach(a => {
+    $$('.nav-links a, .mobile-nav a').forEach(a => {
       const href = a.getAttribute('href');
       a.classList.toggle('active', href === '/' ? path === '/' : path.startsWith(href));
     });
-    $('#navLinks').classList.remove('open');
+    $('#mobileNav')?.classList.remove('open');
     observeReveal();
   }
 
   function navigate(url) {
     history.pushState(null, '', url);
     openDrawer(false);
+    openSearch(false);
     render();
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }
@@ -795,6 +1711,44 @@
     $$('.reveal:not(.in)').forEach((el, i) => { el.style.transitionDelay = `${(i % 4) * 70}ms`; io.observe(el); });
   }
 
+  /* ---------- search modal ---------- */
+  const searchOverlay = $('#searchOverlay');
+  const searchInput = $('#searchInput');
+  const searchResultsList = $('#searchResultsList');
+  function openSearch(open = true) {
+    if (!searchOverlay) return;
+    searchOverlay.classList.toggle('open', open);
+    searchOverlay.setAttribute('aria-hidden', !open);
+    if (open) {
+      searchInput?.focus();
+      renderSearch(searchInput?.value || '');
+    }
+  }
+  function renderSearch(q = '') {
+    if (!searchResultsList) return;
+    const term = q.toLowerCase().trim();
+    if (!term) { searchResultsList.innerHTML = ''; return; }
+    const matches = state.products.filter(p =>
+      p.name.toLowerCase().includes(term) ||
+      p.subtitle.toLowerCase().includes(term) ||
+      (p.ingredients && p.ingredients.some(i => i.name.toLowerCase().includes(term)))
+    );
+    if (!matches.length) {
+      searchResultsList.innerHTML = `<p class="muted small" style="text-align:center;padding:16px 0;">No matching formulas found.</p>`;
+      return;
+    }
+    searchResultsList.innerHTML = matches.map(p => `
+      <a href="/product/${esc(p.slug)}" data-link class="search-result-item" onclick="document.getElementById('searchOverlay')?.classList.remove('open')">
+        <img src="${esc(p.cardImage || p.images[0])}" alt="${esc(p.name)}">
+        <div>
+          <b style="font-family:var(--serif);font-size:17px;color:var(--ink)">${esc(p.name)}</b>
+          <div class="muted small">${esc(p.subtitle)}</div>
+          <strong style="color:var(--gold);font-size:13.5px">${money(p.price)}</strong>
+        </div>
+      </a>
+    `).join('');
+  }
+
   /* ---------- global events ---------- */
   document.addEventListener('click', e => {
     const link = e.target.closest('a[data-link]');
@@ -804,6 +1758,20 @@
     }
     const add = e.target.closest('[data-add]');
     if (add) { e.preventDefault(); addToBag(add.dataset.add); return openDrawer(); }
+    const bundle = e.target.closest('[data-add-bundle]');
+    if (bundle) {
+      e.preventDefault();
+      const bType = bundle.dataset.addBundle;
+      if (bType === 'duo') {
+        addToBag('p6', 1, '30 ml');
+        addToBag('p4', 1, '50 ml');
+        toast('Equilibrium Duo added to bag ✦');
+      } else if (bType === 'suite') {
+        ['p1', 'p6', 'p3', 'p4', 'p5'].forEach(id => addToBag(id, 1));
+        toast('Complete 5-Step Ritual Suite added to bag ✦');
+      }
+      return openDrawer();
+    }
     const inc = e.target.closest('[data-inc]'), dec = e.target.closest('[data-dec]'), rm = e.target.closest('[data-rm]');
     if (inc) { const l = state.bag.find(i => i.id === inc.dataset.inc && i.size === inc.dataset.sz); if (l) setQty(l.id, l.size, l.qty + 1); }
     if (dec) { const l = state.bag.find(i => i.id === dec.dataset.dec && i.size === dec.dataset.sz); if (l) setQty(l.id, l.size, l.qty - 1); }
@@ -826,8 +1794,12 @@
   $('#bagBtn').addEventListener('click', () => openDrawer(true));
   $('#drawerClose').addEventListener('click', () => openDrawer(false));
   $('#scrim').addEventListener('click', () => openDrawer(false));
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') { openDrawer(false); $('.lightbox')?.remove(); } });
-  $('#menuToggle').addEventListener('click', () => $('#navLinks').classList.toggle('open'));
+  $('#searchBtn')?.addEventListener('click', () => openSearch(true));
+  $('#searchClose')?.addEventListener('click', () => openSearch(false));
+  searchOverlay?.addEventListener('click', e => { if (e.target === searchOverlay) openSearch(false); });
+  searchInput?.addEventListener('input', e => renderSearch(e.target.value));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { openDrawer(false); openSearch(false); $('.lightbox')?.remove(); } });
+  $('#menuToggle')?.addEventListener('click', () => $('#mobileNav')?.classList.toggle('open'));
   window.addEventListener('scroll', () => $('#header').classList.toggle('scrolled', scrollY > 20), { passive: true });
   $('#year').textContent = new Date().getFullYear();
 
@@ -845,6 +1817,7 @@
     const s = state.settings;
     $('#announce').textContent = s.announcement || '';
     $('#brandWord').textContent = s.brandName;
+    if ($('#brandTagline')) $('#brandTagline').textContent = s.tagline;
     $('#brandLogo').src = s.logo;
     $$('.footer-mark').forEach(i => (i.src = s.logo));
     $('#footTagline').textContent = s.tagline;

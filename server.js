@@ -5,6 +5,34 @@ const fs = require('fs');
 const path = require('path');
 const seed = require('./seed');
 
+/* ---------- load environment variables safely ---------- */
+function loadEnv() {
+  const envPath = path.join(__dirname, '.env');
+  if (fs.existsSync(envPath)) {
+    try {
+      const content = fs.readFileSync(envPath, 'utf8');
+      for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eq = trimmed.indexOf('=');
+        if (eq > 0) {
+          const key = trimmed.slice(0, eq).trim();
+          const val = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
+          if (!process.env[key]) process.env[key] = val;
+        }
+      }
+    } catch (e) {
+      console.warn('Notice: Could not parse .env file:', e.message);
+    }
+  }
+}
+loadEnv();
+
+// Turn off debug mode by setting production default
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'production';
+}
+const IS_PROD = process.env.NODE_ENV === 'production';
 const IS_VERCEL = !!process.env.VERCEL;
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -16,45 +44,94 @@ const PUBLIC_DIR = path.join(ROOT, 'public');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-/* ---------- password hashing ---------- */
+/* ---------- password hashing & verification (scrypt + timingSafeEqual) ---------- */
 function hashPassword(pw) {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.scryptSync(pw, salt, 64).toString('hex');
   return `${salt}:${hash}`;
 }
+
 function verifyPassword(pw, stored) {
-  const [salt, hash] = String(stored).split(':');
+  if (typeof pw !== 'string' || typeof stored !== 'string') return false;
+  const [salt, hash] = stored.split(':');
   if (!salt || !hash) return false;
-  const test = crypto.scryptSync(pw, salt, 64);
-  const real = Buffer.from(hash, 'hex');
-  return real.length === test.length && crypto.timingSafeEqual(real, test);
+  try {
+    const test = crypto.scryptSync(pw, salt, 64);
+    const real = Buffer.from(hash, 'hex');
+    return real.length === test.length && crypto.timingSafeEqual(real, test);
+  } catch {
+    return false;
+  }
 }
 
-/* ---------- JSON file database ---------- */
+/* ---------- JSON file database with atomic writes ---------- */
 let db;
 if (fs.existsSync(DB_FILE)) {
-  db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
-  // ensure coupons array exists for existing databases
-  if (!db.coupons) db.coupons = [];
+  try {
+    db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+    if (!db.coupons) db.coupons = [];
+    if (!db.messages) db.messages = [];
+    if (!db.subscribers) db.subscribers = [];
+    if (!db.reviews) db.reviews = [];
+    if (!db.orders) db.orders = [];
+  } catch (err) {
+    console.error('Error reading db.json, reseeding safely:', err.message);
+    db = seed(hashPassword);
+    save();
+  }
 } else {
   db = seed(hashPassword);
   save();
   console.log('Created data/db.json with starter content.');
 }
+
+// Support overriding admin credentials via environment variables
+if (process.env.ADMIN_USERNAME) {
+  db.admin.username = process.env.ADMIN_USERNAME;
+}
+if (process.env.ADMIN_PASSWORD) {
+  db.admin.password = hashPassword(process.env.ADMIN_PASSWORD);
+}
+
 function save() {
   const tmp = DB_FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
+  fs.writeFileSync(tmp, JSON.stringify(db, null, 2), { mode: 0o600 });
   fs.renameSync(tmp, DB_FILE);
 }
-const uid = (prefix = '') => prefix + crypto.randomBytes(6).toString('hex');
-const slugify = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
-  .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || uid();
-const clean = (v, max = 2000) => String(v ?? '').trim().slice(0, max);
-const isEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-/* ---------- sessions ---------- */
+const uid = (prefix = '') => prefix + crypto.randomBytes(8).toString('hex');
+const slugify = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || uid();
+
+/* ---------- input sanitization & XSS protection ---------- */
+function sanitizeText(v, max = 2000) {
+  if (v == null) return '';
+  let str = String(v).normalize('NFC').replace(/\0/g, ''); // strip null bytes
+  // Strip script tags and their contents
+  str = str.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  // Strip all HTML tags
+  str = str.replace(/<[^>]*>?/gm, '');
+  // Strip javascript pseudo-protocol
+  str = str.replace(/javascript\s*:/gi, '');
+  return str.trim().slice(0, max);
+}
+
+const clean = (v, max = 2000) => sanitizeText(v, max);
+const isEmail = e => typeof e === 'string' && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(e.trim()) && e.trim().length <= 160;
+const isPhone = p => typeof p === 'string' && /^[+]?[\d\s\-().]{7,25}$/.test(p.trim());
+
+/* ---------- sessions & authentication ---------- */
 const sessions = new Map(); // token -> { username, expires }
-const SESSION_TTL = 1000 * 60 * 60 * 12;
+const SESSION_TTL = 1000 * 60 * 60 * 12; // 12 hours
+
+// Cleanup expired sessions periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, s] of sessions.entries()) {
+    if (s.expires < now) sessions.delete(token);
+  }
+}, 1000 * 60 * 15).unref();
+
 function getCookie(req, name) {
   const raw = req.headers.cookie || '';
   for (const part of raw.split(';')) {
@@ -63,51 +140,229 @@ function getCookie(req, name) {
   }
   return null;
 }
+
 function requireAdmin(req, res, next) {
   const token = getCookie(req, 'aureone_admin');
-  const s = token && sessions.get(token);
+  if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  const s = sessions.get(token);
   if (!s || s.expires < Date.now()) {
     if (token) sessions.delete(token);
-    return res.status(401).json({ error: 'Not authenticated' });
+    return res.status(401).json({ error: 'Session expired. Please sign in again.' });
   }
-  s.expires = Date.now() + SESSION_TTL;
+  s.expires = Date.now() + SESSION_TTL; // Rolling session
   req.admin = s;
   next();
 }
+
+/* ---------- in-memory sliding rate limiters ---------- */
+function createRateLimiter({ windowMs = 900000, max = 100, message = 'Too many requests' }) {
+  const hits = new Map(); // ip -> [timestamps]
+  return (req, res, next) => {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const windowStart = now - windowMs;
+
+    let timestamps = hits.get(ip) || [];
+    timestamps = timestamps.filter(t => t > windowStart);
+
+    if (timestamps.length >= max) {
+      const retryAfterSec = Math.ceil((timestamps[0] + windowMs - now) / 1000);
+      res.setHeader('Retry-After', String(Math.max(1, retryAfterSec)));
+      return res.status(429).json({ error: message });
+    }
+
+    timestamps.push(now);
+    hits.set(ip, timestamps);
+
+    if (hits.size > 5000) {
+      for (const [k, v] of hits.entries()) {
+        if (!v.some(t => t > windowStart)) hits.delete(k);
+      }
+    }
+    next();
+  };
+}
+
+// Dedicated Rate Limiters
+const globalApiLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: 'API rate limit exceeded. Please wait a few minutes.'
+});
+const contactLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 6,
+  message: 'Too many messages sent. Please try again later.'
+});
+const subscribeLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 6,
+  message: 'Too many newsletter signups. Please try again later.'
+});
+const orderLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Order creation limit reached. Please wait before placing another order.'
+});
+const couponLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: 'Too many coupon validation attempts. Please try again in 15 minutes.'
+});
+
 const loginAttempts = new Map(); // ip -> { count, until }
 
-/* ---------- uploads ---------- */
-const ALLOWED = { 'image/jpeg': '.jpg', 'image/png': '.png', 'image/webp': '.webp', 'image/gif': '.gif', 'image/svg+xml': '.svg', 'image/avif': '.avif' };
+/* ---------- upload hardening ---------- */
+const ALLOWED_MIME = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+  'image/svg+xml': '.svg',
+  'image/avif': '.avif'
+};
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: UPLOAD_DIR,
-    filename: (req, file, cb) => cb(null, `${Date.now()}-${uid()}${ALLOWED[file.mimetype]}`)
+    filename: (req, file, cb) => {
+      const ext = ALLOWED_MIME[file.mimetype] || '.jpg';
+      cb(null, `${Date.now()}-${crypto.randomBytes(12).toString('hex')}${ext}`);
+    }
   }),
-  limits: { fileSize: 8 * 1024 * 1024, files: 12 },
-  fileFilter: (req, file, cb) => cb(ALLOWED[file.mimetype] ? null : new Error('Only image files are allowed'), !!ALLOWED[file.mimetype])
+  limits: { fileSize: 5 * 1024 * 1024, files: 6 }, // 5 MB limit
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_MIME[file.mimetype]) {
+      return cb(new Error('Only safe image formats (JPG, PNG, WEBP, GIF, SVG, AVIF) are allowed.'));
+    }
+    cb(null, true);
+  }
 });
 
-/* ---------- app ---------- */
+/* ---------- express application setup ---------- */
 const app = express();
 app.disable('x-powered-by');
+
+/* 1. Security Headers Middleware */
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+
+  if (IS_PROD) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  // Content Security Policy
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: https: blob:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'"
+  ].join('; '));
+
+  next();
+});
+
+/* 2. Path Traversal & Sensitive File Guard */
+app.use((req, res, next) => {
+  try {
+    const decoded = decodeURIComponent(req.path);
+    if (decoded.includes('..') || decoded.includes('\0')) {
+      return res.status(400).json({ error: 'Invalid path' });
+    }
+    const lower = decoded.toLowerCase();
+    if (
+      lower.includes('.env') ||
+      lower.includes('.git') ||
+      lower.includes('db.json') ||
+      lower.includes('seed.js') ||
+      lower.includes('server.js') ||
+      lower.includes('package.json') ||
+      lower.includes('package-lock.json') ||
+      lower.endsWith('.tmp') ||
+      lower.endsWith('.bak')
+    ) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+  } catch {
+    return res.status(400).json({ error: 'Malformed request path' });
+  }
+  next();
+});
+
+/* 3. CORS Configuration */
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
+  .split(',')
+  .map(o => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    const isAllowed = allowedOrigins.includes(origin) ||
+      origin === `http://localhost:${PORT}` ||
+      origin === `http://127.0.0.1:${PORT}`;
+    if (isAllowed) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+      res.setHeader('Access-Control-Max-Age', '86400');
+    } else if (req.path.startsWith('/api/')) {
+      return res.status(403).json({ error: 'CORS: Origin not permitted' });
+    }
+  }
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
+  next();
+});
+
+/* 4. Request Body Parser with payload limit */
 app.use(express.json({ limit: '1mb' }));
-app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
-app.use(express.static(PUBLIC_DIR, { index: false }));
+
+/* 5. Static File Serving with security constraints */
+app.use('/uploads', express.static(UPLOAD_DIR, {
+  maxAge: '7d',
+  dotfiles: 'deny',
+  fallthrough: false
+}));
+app.use(express.static(PUBLIC_DIR, {
+  index: false,
+  dotfiles: 'deny'
+}));
+
+/* Apply general API rate limiting */
+app.use('/api', globalApiLimiter);
 
 const publicProduct = p => {
   const { createdAt, updatedAt, ...rest } = p;
   return rest;
 };
 
-/* ---------- coupon helpers ---------- */
+/* ---------- coupon validation helper ---------- */
 function validateCoupon(code, subtotal) {
-  const c = (db.coupons || []).find(c => c.active && c.code.toUpperCase() === String(code).toUpperCase().trim());
+  const cleanCode = sanitizeText(code, 30).toUpperCase().trim();
+  const c = (db.coupons || []).find(c => c.active && c.code.toUpperCase() === cleanCode);
   if (!c) return { valid: false, error: 'Invalid coupon code.' };
   const today = new Date().toISOString().slice(0, 10);
   if (c.validFrom && today < c.validFrom) return { valid: false, error: 'This coupon is not yet active.' };
   if (c.validUntil && today > c.validUntil) return { valid: false, error: 'This coupon has expired.' };
   if (c.usageLimit > 0 && c.usageCount >= c.usageLimit) return { valid: false, error: 'This coupon has been fully redeemed.' };
   if (subtotal < c.minOrder) return { valid: false, error: `Minimum order of ₹${c.minOrder} required for this coupon.` };
+
   let discount;
   if (c.type === 'percent') {
     discount = Math.round(subtotal * c.value / 100);
@@ -119,22 +374,29 @@ function validateCoupon(code, subtotal) {
   return { valid: true, coupon: c, discount, description: c.description };
 }
 
-/* ----- public API ----- */
-app.get('/api/settings', (req, res) => res.json(db.settings));
+/* ==========================================================================
+   PUBLIC API ENDPOINTS
+   ========================================================================== */
+
+app.get('/api/settings', (req, res) => {
+  res.json(db.settings);
+});
 
 app.get('/api/products', (req, res) => {
   res.json(db.products.filter(p => p.active).map(publicProduct));
 });
 
 app.get('/api/products/:slug', (req, res) => {
-  const p = db.products.find(p => p.active && (p.slug === req.params.slug || p.id === req.params.slug));
+  const slug = clean(req.params.slug, 120);
+  const p = db.products.find(p => p.active && (p.slug === slug || p.id === slug));
   if (!p) return res.status(404).json({ error: 'Product not found' });
   res.json(publicProduct(p));
 });
 
-app.get('/api/reviews', (req, res) => res.json(db.reviews || []));
+app.get('/api/reviews', (req, res) => {
+  res.json(db.reviews || []);
+});
 
-/* ----- public coupon endpoints ----- */
 app.get('/api/offers', (req, res) => {
   const today = new Date().toISOString().slice(0, 10);
   const active = (db.coupons || []).filter(c =>
@@ -154,31 +416,38 @@ app.get('/api/offers', (req, res) => {
   res.json(active);
 });
 
-app.post('/api/coupons/apply', (req, res) => {
+app.post('/api/coupons/apply', couponLimiter, (req, res) => {
   const { code, subtotal } = req.body || {};
   if (!code) return res.status(400).json({ error: 'Please enter a coupon code.' });
-  const result = validateCoupon(code, Number(subtotal) || 0);
+  const numSubtotal = Math.max(0, Number(subtotal) || 0);
+  const result = validateCoupon(code, numSubtotal);
   if (!result.valid) return res.status(400).json({ error: result.error });
   res.json({ discount: result.discount, code: result.coupon.code, description: result.description });
 });
 
-app.post('/api/orders', (req, res) => {
+app.post('/api/orders', orderLimiter, (req, res) => {
   const c = req.body.customer || {};
   const customer = {
-    name: clean(c.name, 120), email: clean(c.email, 160), phone: clean(c.phone, 30),
-    address: clean(c.address, 400), city: clean(c.city, 80), state: clean(c.state, 80), pincode: clean(c.pincode, 12)
+    name: clean(c.name, 120),
+    email: clean(c.email, 160).toLowerCase(),
+    phone: clean(c.phone, 30),
+    address: clean(c.address, 400),
+    city: clean(c.city, 80),
+    state: clean(c.state, 80),
+    pincode: clean(c.pincode, 12)
   };
-  if (!customer.name || !isEmail(customer.email) || !customer.phone || !customer.address || !customer.city || !customer.pincode) {
-    return res.status(400).json({ error: 'Please complete all required delivery details.' });
+
+  if (!customer.name || !isEmail(customer.email) || !isPhone(customer.phone) || !customer.address || !customer.city || !customer.pincode) {
+    return res.status(400).json({ error: 'Please provide valid delivery and contact details.' });
   }
+
   const items = [];
   for (const it of Array.isArray(req.body.items) ? req.body.items : []) {
-    const p = db.products.find(p => p.id === it.id && p.active);
+    const p = db.products.find(p => p.id === clean(it.id, 40) && p.active);
     const qty = Math.max(1, Math.min(20, parseInt(it.qty, 10) || 1));
     if (!p) return res.status(400).json({ error: 'A product in your bag is no longer available.' });
 
-    // Determine stock from variant if specified
-    let variantSize = it.size || null;
+    let variantSize = it.size ? clean(it.size, 40) : null;
     let stockSource = p;
     let itemPrice = p.price;
     let itemSize = p.size;
@@ -187,17 +456,18 @@ app.post('/api/orders', (req, res) => {
       if (v) { stockSource = v; itemPrice = v.price; itemSize = v.size; }
     }
 
-    if (stockSource.stock < qty) return res.status(400).json({ error: `Only ${stockSource.stock} of ${p.name} (${itemSize}) left in stock.` });
+    if (stockSource.stock < qty) {
+      return res.status(400).json({ error: `Only ${stockSource.stock} of ${p.name} (${itemSize}) left in stock.` });
+    }
     items.push({ id: p.id, name: p.name, subtitle: p.subtitle, image: p.images[0], price: itemPrice, size: itemSize, qty });
   }
   if (!items.length) return res.status(400).json({ error: 'Your bag is empty.' });
 
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
 
-  // Apply coupon if provided
   let discount = 0;
   let couponCode = null;
-  const couponInput = clean(req.body.coupon, 60);
+  const couponInput = clean(req.body.coupon, 30);
   if (couponInput) {
     const cv = validateCoupon(couponInput, subtotal);
     if (!cv.valid) return res.status(400).json({ error: cv.error });
@@ -209,16 +479,14 @@ app.post('/api/orders', (req, res) => {
   const shipping = (subtotal - discount) <= 0 || subtotal >= db.settings.freeShippingThreshold ? 0 : Number(db.settings.shippingFee) || 0;
   const total = Math.max(0, subtotal - discount) + shipping;
 
-  // Deduct stock
+  // Deduct inventory
   items.forEach(i => {
     const p = db.products.find(p => p.id === i.id);
     if (p) {
-      // Deduct from variant if it exists
       if (i.size && Array.isArray(p.variants)) {
         const v = p.variants.find(v => v.size === i.size);
         if (v) v.stock = Math.max(0, v.stock - i.qty);
       }
-      // Also deduct from main product stock if variant matches or no variants
       if (!Array.isArray(p.variants) || !p.variants.length || p.size === i.size) {
         p.stock = Math.max(0, p.stock - i.qty);
       }
@@ -228,7 +496,13 @@ app.post('/api/orders', (req, res) => {
   const order = {
     id: uid(),
     number: 'AUR' + String(1001 + db.orders.length),
-    customer, items, subtotal, discount, coupon: couponCode, shipping, total,
+    customer,
+    items,
+    subtotal,
+    discount,
+    coupon: couponCode,
+    shipping,
+    total,
     payment: 'Cash on Delivery',
     note: clean(req.body.note, 500),
     status: 'pending',
@@ -239,17 +513,24 @@ app.post('/api/orders', (req, res) => {
   res.status(201).json({ number: order.number, total: order.total });
 });
 
-app.post('/api/contact', (req, res) => {
-  const m = { name: clean(req.body.name, 120), email: clean(req.body.email, 160), subject: clean(req.body.subject, 160), message: clean(req.body.message, 3000) };
-  if (!m.name || !isEmail(m.email) || !m.message) return res.status(400).json({ error: 'Please share your name, a valid email and a message.' });
+app.post('/api/contact', contactLimiter, (req, res) => {
+  const m = {
+    name: clean(req.body.name, 120),
+    email: clean(req.body.email, 160).toLowerCase(),
+    subject: clean(req.body.subject, 160),
+    message: clean(req.body.message, 3000)
+  };
+  if (!m.name || !isEmail(m.email) || !m.message) {
+    return res.status(400).json({ error: 'Please provide your name, a valid email address and a message.' });
+  }
   db.messages.unshift({ id: uid(), ...m, read: false, createdAt: new Date().toISOString() });
   save();
   res.status(201).json({ ok: true });
 });
 
-app.post('/api/subscribe', (req, res) => {
+app.post('/api/subscribe', subscribeLimiter, (req, res) => {
   const email = clean(req.body.email, 160).toLowerCase();
-  if (!isEmail(email)) return res.status(400).json({ error: 'Please enter a valid email.' });
+  if (!isEmail(email)) return res.status(400).json({ error: 'Please enter a valid email address.' });
   if (!db.subscribers.some(s => s.email === email)) {
     db.subscribers.unshift({ id: uid(), email, createdAt: new Date().toISOString() });
     save();
@@ -257,46 +538,94 @@ app.post('/api/subscribe', (req, res) => {
   res.status(201).json({ ok: true });
 });
 
-/* ----- admin auth ----- */
+/* ==========================================================================
+   ADMIN AUTHENTICATION & PROTECTED ENDPOINTS
+   ========================================================================== */
+
 app.post('/api/admin/login', (req, res) => {
-  const ip = req.ip;
+  const ip = req.headers['x-forwarded-for']?.split(',')[0].trim() || req.ip || 'unknown';
   const att = loginAttempts.get(ip);
-  if (att && att.until > Date.now()) return res.status(429).json({ error: 'Too many attempts. Try again in a few minutes.' });
+  if (att && att.until > Date.now()) {
+    const remainingSec = Math.ceil((att.until - Date.now()) / 1000);
+    res.setHeader('Retry-After', String(remainingSec));
+    return res.status(429).json({ error: 'Too many failed login attempts. Try again later.' });
+  }
+
   const { username, password } = req.body || {};
-  if (username !== db.admin.username || !verifyPassword(String(password || ''), db.admin.password)) {
+  const cleanUser = clean(username, 80);
+  const cleanPass = String(password || '');
+
+  if (cleanUser !== db.admin.username || !verifyPassword(cleanPass, db.admin.password)) {
     const count = (att?.count || 0) + 1;
-    loginAttempts.set(ip, { count, until: count >= 5 ? Date.now() + 5 * 60 * 1000 : 0 });
+    loginAttempts.set(ip, {
+      count,
+      until: count >= 5 ? Date.now() + 15 * 60 * 1000 : 0 // 15-minute lockout after 5 fails
+    });
     return res.status(401).json({ error: 'Invalid username or password.' });
   }
+
   loginAttempts.delete(ip);
   const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { username, expires: Date.now() + SESSION_TTL });
-  res.setHeader('Set-Cookie', `aureone_admin=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${SESSION_TTL / 1000}${IS_VERCEL ? '; Secure' : ''}`);
-  res.json({ username });
+  sessions.set(token, { username: cleanUser, expires: Date.now() + SESSION_TTL });
+
+  const cookieFlags = [
+    `aureone_admin=${token}`,
+    'HttpOnly',
+    'Path=/',
+    'SameSite=Strict',
+    `Max-Age=${SESSION_TTL / 1000}`
+  ];
+  if (IS_PROD || IS_VERCEL || req.secure) cookieFlags.push('Secure');
+
+  res.setHeader('Set-Cookie', cookieFlags.join('; '));
+  res.json({ username: cleanUser });
 });
 
 app.post('/api/admin/logout', (req, res) => {
   const token = getCookie(req, 'aureone_admin');
   if (token) sessions.delete(token);
-  res.setHeader('Set-Cookie', `aureone_admin=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0${IS_VERCEL ? '; Secure' : ''}`);
+
+  const cookieFlags = [
+    'aureone_admin=',
+    'HttpOnly',
+    'Path=/',
+    'SameSite=Strict',
+    'Max-Age=0'
+  ];
+  if (IS_PROD || IS_VERCEL || req.secure) cookieFlags.push('Secure');
+
+  res.setHeader('Set-Cookie', cookieFlags.join('; '));
   res.json({ ok: true });
 });
 
+/* Enforce authentication for all /api/admin routes */
 app.use('/api/admin', requireAdmin);
 
-app.get('/api/admin/me', (req, res) => res.json({ username: req.admin.username }));
+app.get('/api/admin/me', (req, res) => {
+  res.json({ username: req.admin.username });
+});
 
 app.post('/api/admin/password', (req, res) => {
   const { current, next, username } = req.body || {};
-  if (!verifyPassword(String(current || ''), db.admin.password)) return res.status(400).json({ error: 'Current password is incorrect.' });
-  if (String(next || '').length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
-  db.admin.password = hashPassword(String(next));
-  if (username && clean(username, 60)) db.admin.username = clean(username, 60);
+  if (!verifyPassword(String(current || ''), db.admin.password)) {
+    return res.status(400).json({ error: 'Current password is incorrect.' });
+  }
+  const nextPw = String(next || '');
+  if (nextPw.length < 8) {
+    return res.status(400).json({ error: 'New password must be at least 8 characters long.' });
+  }
+  if (!/\d/.test(nextPw) || !/[a-zA-Z]/.test(nextPw)) {
+    return res.status(400).json({ error: 'New password must contain both letters and numbers.' });
+  }
+  db.admin.password = hashPassword(nextPw);
+  if (username && clean(username, 60)) {
+    db.admin.username = clean(username, 60);
+  }
   save();
   res.json({ ok: true });
 });
 
-/* ----- dashboard ----- */
+/* Dashboard statistics */
 app.get('/api/admin/stats', (req, res) => {
   const live = db.orders.filter(o => o.status !== 'cancelled');
   const revenue = live.reduce((s, o) => s + o.total, 0);
@@ -323,7 +652,7 @@ app.get('/api/admin/stats', (req, res) => {
   });
 });
 
-/* ----- products ----- */
+/* Admin Product Management */
 function productFromBody(b, existing = {}) {
   const lines = v => (Array.isArray(v) ? v : String(v || '').split('\n')).map(s => clean(s, 200)).filter(Boolean);
   const ingredients = (Array.isArray(b.ingredients) ? b.ingredients : [])
@@ -357,6 +686,7 @@ function productFromBody(b, existing = {}) {
     updatedAt: new Date().toISOString()
   };
 }
+
 function uniqueSlug(base, ignoreId) {
   let slug = slugify(base), n = 2;
   while (db.products.some(p => p.slug === slug && p.id !== ignoreId)) slug = `${slugify(base)}-${n++}`;
@@ -377,7 +707,7 @@ app.post('/api/admin/products', (req, res) => {
 });
 
 app.put('/api/admin/products/:id', (req, res) => {
-  const idx = db.products.findIndex(p => p.id === req.params.id);
+  const idx = db.products.findIndex(p => p.id === clean(req.params.id, 40));
   if (idx < 0) return res.status(404).json({ error: 'Product not found' });
   const p = productFromBody(req.body, db.products[idx]);
   if (!p.name) return res.status(400).json({ error: 'Product name is required.' });
@@ -389,75 +719,99 @@ app.put('/api/admin/products/:id', (req, res) => {
 
 app.delete('/api/admin/products/:id', (req, res) => {
   const before = db.products.length;
-  db.products = db.products.filter(p => p.id !== req.params.id);
+  db.products = db.products.filter(p => p.id !== clean(req.params.id, 40));
   if (db.products.length === before) return res.status(404).json({ error: 'Product not found' });
   save();
   res.json({ ok: true });
 });
 
-app.post('/api/admin/upload', upload.array('files', 12), (req, res) => {
+app.post('/api/admin/upload', upload.array('files', 6), (req, res) => {
   res.json({ urls: (req.files || []).map(f => `/uploads/${f.filename}`) });
 });
 
-/* ----- orders ----- */
+/* Admin Order Management */
 const STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
 app.get('/api/admin/orders', (req, res) => res.json(db.orders));
+
 app.patch('/api/admin/orders/:id', (req, res) => {
-  const o = db.orders.find(o => o.id === req.params.id);
+  const o = db.orders.find(o => o.id === clean(req.params.id, 40));
   if (!o) return res.status(404).json({ error: 'Order not found' });
-  const status = req.body.status;
+  const status = clean(req.body.status, 20);
   if (!STATUSES.includes(status)) return res.status(400).json({ error: 'Invalid status' });
-  // return stock when an order is cancelled, take it again if un-cancelled
-  if (status === 'cancelled' && o.status !== 'cancelled') o.items.forEach(i => { const p = db.products.find(p => p.id === i.id); if (p) p.stock += i.qty; });
-  if (status !== 'cancelled' && o.status === 'cancelled') o.items.forEach(i => { const p = db.products.find(p => p.id === i.id); if (p) p.stock = Math.max(0, p.stock - i.qty); });
+
+  if (status === 'cancelled' && o.status !== 'cancelled') {
+    o.items.forEach(i => {
+      const p = db.products.find(p => p.id === i.id);
+      if (p) p.stock += i.qty;
+    });
+  }
+  if (status !== 'cancelled' && o.status === 'cancelled') {
+    o.items.forEach(i => {
+      const p = db.products.find(p => p.id === i.id);
+      if (p) p.stock = Math.max(0, p.stock - i.qty);
+    });
+  }
   o.status = status;
   o.updatedAt = new Date().toISOString();
   save();
   res.json(o);
 });
+
 app.delete('/api/admin/orders/:id', (req, res) => {
-  db.orders = db.orders.filter(o => o.id !== req.params.id);
+  db.orders = db.orders.filter(o => o.id !== clean(req.params.id, 40));
   save();
   res.json({ ok: true });
 });
 
-/* ----- messages & subscribers ----- */
+/* Admin Messages & Subscribers */
 app.get('/api/admin/messages', (req, res) => res.json(db.messages));
+
 app.patch('/api/admin/messages/:id', (req, res) => {
-  const m = db.messages.find(m => m.id === req.params.id);
+  const m = db.messages.find(m => m.id === clean(req.params.id, 40));
   if (!m) return res.status(404).json({ error: 'Message not found' });
   m.read = !!req.body.read;
   save();
   res.json(m);
 });
+
 app.delete('/api/admin/messages/:id', (req, res) => {
-  db.messages = db.messages.filter(m => m.id !== req.params.id);
-  save();
-  res.json({ ok: true });
-});
-app.get('/api/admin/subscribers', (req, res) => res.json(db.subscribers));
-app.delete('/api/admin/subscribers/:id', (req, res) => {
-  db.subscribers = db.subscribers.filter(s => s.id !== req.params.id);
+  db.messages = db.messages.filter(m => m.id !== clean(req.params.id, 40));
   save();
   res.json({ ok: true });
 });
 
-/* ----- reviews ----- */
+app.get('/api/admin/subscribers', (req, res) => res.json(db.subscribers));
+
+app.delete('/api/admin/subscribers/:id', (req, res) => {
+  db.subscribers = db.subscribers.filter(s => s.id !== clean(req.params.id, 40));
+  save();
+  res.json({ ok: true });
+});
+
+/* Admin Reviews */
 app.get('/api/admin/reviews', (req, res) => res.json(db.reviews || []));
+
 app.post('/api/admin/reviews', (req, res) => {
-  const r = { id: uid('r'), name: clean(req.body.name, 80), product: clean(req.body.product, 120), text: clean(req.body.text, 1000), rating: Math.min(5, Math.max(1, parseInt(req.body.rating, 10) || 5)) };
+  const r = {
+    id: uid('r'),
+    name: clean(req.body.name, 80),
+    product: clean(req.body.product, 120),
+    text: clean(req.body.text, 1000),
+    rating: Math.min(5, Math.max(1, parseInt(req.body.rating, 10) || 5))
+  };
   if (!r.name || !r.text) return res.status(400).json({ error: 'Name and review text are required.' });
   (db.reviews ||= []).unshift(r);
   save();
   res.status(201).json(r);
 });
+
 app.delete('/api/admin/reviews/:id', (req, res) => {
-  db.reviews = (db.reviews || []).filter(r => r.id !== req.params.id);
+  db.reviews = (db.reviews || []).filter(r => r.id !== clean(req.params.id, 40));
   save();
   res.json({ ok: true });
 });
 
-/* ----- coupons / offers ----- */
+/* Admin Coupons */
 app.get('/api/admin/coupons', (req, res) => res.json(db.coupons || []));
 
 app.post('/api/admin/coupons', (req, res) => {
@@ -485,12 +839,14 @@ app.post('/api/admin/coupons', (req, res) => {
 });
 
 app.put('/api/admin/coupons/:id', (req, res) => {
-  const idx = (db.coupons || []).findIndex(c => c.id === req.params.id);
+  const idx = (db.coupons || []).findIndex(c => c.id === clean(req.params.id, 40));
   if (idx < 0) return res.status(404).json({ error: 'Coupon not found' });
   const b = req.body || {};
   const existing = db.coupons[idx];
   const code = clean(b.code, 30).toUpperCase().replace(/[^A-Z0-9]/g, '') || existing.code;
-  if (db.coupons.some(c => c.code === code && c.id !== existing.id)) return res.status(400).json({ error: 'A coupon with this code already exists.' });
+  if (db.coupons.some(c => c.code === code && c.id !== existing.id)) {
+    return res.status(400).json({ error: 'A coupon with this code already exists.' });
+  }
   db.coupons[idx] = {
     ...existing,
     code,
@@ -510,41 +866,51 @@ app.put('/api/admin/coupons/:id', (req, res) => {
 
 app.delete('/api/admin/coupons/:id', (req, res) => {
   const before = (db.coupons || []).length;
-  db.coupons = (db.coupons || []).filter(c => c.id !== req.params.id);
+  db.coupons = (db.coupons || []).filter(c => c.id !== clean(req.params.id, 40));
   if (db.coupons.length === before) return res.status(404).json({ error: 'Coupon not found' });
   save();
   res.json({ ok: true });
 });
 
-/* ----- settings ----- */
+/* Admin Settings */
 app.get('/api/admin/settings', (req, res) => res.json(db.settings));
+
 app.put('/api/admin/settings', (req, res) => {
   const next = { ...db.settings };
   for (const key of Object.keys(db.settings)) {
     if (!(key in req.body)) continue;
-    next[key] = typeof db.settings[key] === 'number' ? Math.max(0, Number(req.body[key]) || 0) : clean(req.body[key], 4000);
+    next[key] = typeof db.settings[key] === 'number'
+      ? Math.max(0, Number(req.body[key]) || 0)
+      : clean(req.body[key], 4000);
   }
   db.settings = next;
   save();
   res.json(db.settings);
 });
 
-/* ---------- errors & page routing ---------- */
+/* Catch-all API 404 handler */
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found' }));
 
-// Vercel invokes this Express app as a serverless function. Serve the HTML
-// entry points explicitly there as well as locally; express.static has
-// index:false above, so it will not automatically serve /index.html for /.
+/* SPA Page Routes */
 app.get(['/admin', '/admin/*'], (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'admin', 'index.html'));
 });
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
+/* Centralized production-safe error handler (no stack trace leak) */
 app.use((err, req, res, next) => {
-  console.error(err.message);
-  res.status(400).json({ error: err.message || 'Something went wrong' });
+  console.error(`[${new Date().toISOString()}] Server Error:`, err.message);
+  if (!IS_PROD && err.stack) {
+    console.error(err.stack);
+  }
+  const status = err.status || (err.message && err.message.includes('allowed') ? 400 : 500);
+  const clientMessage = (status < 500 && err.message)
+    ? sanitizeText(err.message, 200)
+    : 'An unexpected error occurred. Please try again later.';
+  res.status(status).json({ error: clientMessage });
 });
 
 if (!IS_VERCEL) {

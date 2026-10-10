@@ -6,8 +6,8 @@
   <title>AUREONÉ Atelier — Admin</title>
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/png" href="/assets/img/monogram.png">
-  <link rel="stylesheet" href="/assets/css/theme.css">
-  <link rel="stylesheet" href="/assets/css/admin.css">
+  <link rel="stylesheet" href="/assets/css/theme.css?v=2.1">
+  <link rel="stylesheet" href="/assets/css/admin.css?v=2.1">
 </head>
 <body>
   <div class="ambient" aria-hidden="true"><span></span><span></span><span></span></div>
@@ -17,10 +17,10 @@
     <form class="login-card glass glass-strong" id="loginForm">
       <img src="/assets/img/monogram.png" alt="" class="login-mark">
       <div class="brand-word">AUREONÉ</div>
-      <div class="eyebrow" style="margin:6px 0 30px">The Atelier · Admin</div>
+      <div class="eyebrow" style="margin:6px 0 20px">The Atelier · Admin</div>
       <label class="field"><span>Username</span><input class="input" name="username" autocomplete="username" required></label>
       <label class="field"><span>Password</span><input class="input" type="password" name="password" autocomplete="current-password" required></label>
-      <button class="btn btn-gold btn-block" type="submit">Sign in</button>
+      <button class="btn btn-gold btn-block" type="submit" style="margin-top:10px">Sign in</button>
       <p class="login-err" id="loginErr"></p>
       <a href="/" class="back-link">← Back to the boutique</a>
     </form>
@@ -29,7 +29,7 @@
   <!-- shell -->
   <div class="shell" id="shell" hidden>
     <aside class="side glass" id="side">
-      <a href="/admin" class="side-brand">
+      <a href="#/dashboard" class="side-brand">
         <img src="/assets/img/monogram.png" alt="">
         <div><div class="brand-word">AUREONÉ</div><div class="eyebrow">Atelier</div></div>
       </a>
@@ -55,6 +55,6 @@
   <div class="modal-wrap" id="modal" hidden></div>
   <div class="toast-wrap" id="toasts"></div>
 
-  <script src="/assets/js/admin.js"></script>
+  <script src="/assets/js/admin.js?v=2.1"></script>
 </body>
 </html>

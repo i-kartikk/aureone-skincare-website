@@ -170,17 +170,20 @@ module.exports = function seed(hashPassword) {
   }));
 
   return {
-    admin: { username: 'admin', password: hashPassword('aureone@123') },
+    admin: {
+      username: process.env.ADMIN_USERNAME || 'admin',
+      password: hashPassword(process.env.ADMIN_PASSWORD || 'aureone@123')
+    },
     settings: {
       brandName: 'AUREONÉ',
-      tagline: 'The Ritual of Skin Health',
+      tagline: 'The Art of Radiance',
       announcement: 'Complimentary shipping on orders above ₹999 · Made with care in India',
       heroEyebrow: 'Purposeful skincare · Real radiance',
       heroTitle: 'The ritual behind healthy skin.',
       heroSubtitle: 'We don’t formulate for a moment of glow. We formulate for the ritual behind healthy skin — purposeful ingredients, consistent care and long-term radiance.',
       heroImage: img('range-square-2.jpg'),
       logo: img('monogram.png'),
-      aboutTitle: 'Building the ritual of skin health.',
+      aboutTitle: 'The Art of Radiance.',
       aboutText: 'AUREONÉ is not about adding more products to a skincare shelf. It is about creating purposeful skincare rituals for healthier, more radiant skin. Every ingredient has a role — no unnecessary overload just to make the INCI list look impressive. We combine effective actives such as Niacinamide, Vitamin C, Hyaluronic Acid, Panthenol, Ceramides and Allantoin with supporting ingredients designed around each product’s purpose. A premium experience, sophisticated packaging and textures — but a straightforward routine that people can actually follow.',
       aboutImage: img('range-tall-2.jpg'),
       currency: '₹',

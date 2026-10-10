@@ -1,8 +1,23 @@
 {
+  "version": 2,
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "public/**"
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/index.js" },
     { "source": "/uploads/:path*", "destination": "/api/index.js" },
-    { "source": "/admin/:path*", "destination": "/admin/index.html" },
-    { "source": "/:path*", "destination": "/index.html" }
+    { "source": "/admin/:path*", "destination": "/api/index.js" },
+    { "source": "/admin", "destination": "/api/index.js" },
+    { "source": "/(.*)", "destination": "/api/index.js" }
   ]
 }
