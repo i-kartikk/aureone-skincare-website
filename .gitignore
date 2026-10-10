@@ -1,0 +1,8 @@
+node_modules/
+data/
+uploads/
+.vercel/
+.env
+.env.*
+!.env.example
+.DS_Store

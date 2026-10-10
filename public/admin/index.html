@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AUREONÉ Atelier — Admin</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="/assets/img/monogram.png">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/admin.css">
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"><span></span><span></span><span></span></div>
+
+  <!-- login -->
+  <section class="login" id="login" hidden>
+    <form class="login-card glass glass-strong" id="loginForm">
+      <img src="/assets/img/monogram.png" alt="" class="login-mark">
+      <div class="brand-word">AUREONÉ</div>
+      <div class="eyebrow" style="margin:6px 0 30px">The Atelier · Admin</div>
+      <label class="field"><span>Username</span><input class="input" name="username" autocomplete="username" required></label>
+      <label class="field"><span>Password</span><input class="input" type="password" name="password" autocomplete="current-password" required></label>
+      <button class="btn btn-gold btn-block" type="submit">Sign in</button>
+      <p class="login-err" id="loginErr"></p>
+      <a href="/" class="back-link">← Back to the boutique</a>
+    </form>
+  </section>
+
+  <!-- shell -->
+  <div class="shell" id="shell" hidden>
+    <aside class="side glass" id="side">
+      <a href="/admin" class="side-brand">
+        <img src="/assets/img/monogram.png" alt="">
+        <div><div class="brand-word">AUREONÉ</div><div class="eyebrow">Atelier</div></div>
+      </a>
+      <nav class="side-nav" id="sideNav"></nav>
+      <div class="side-foot">
+        <a href="/" target="_blank" class="btn btn-glass btn-sm btn-block">View store ↗</a>
+        <button class="btn btn-ghost btn-sm btn-block" id="logout">Sign out</button>
+      </div>
+    </aside>
+    <div class="main">
+      <header class="top glass">
+        <button class="icon-btn side-toggle" id="sideToggle" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 8h16M4 16h16"/></svg></button>
+        <div>
+          <div class="eyebrow" id="crumb">Atelier</div>
+          <h1 class="display" id="pageTitle">Dashboard</h1>
+        </div>
+        <div class="top-actions" id="topActions"></div>
+      </header>
+      <main id="view"></main>
+    </div>
+  </div>
+
+  <div class="modal-wrap" id="modal" hidden></div>
+  <div class="toast-wrap" id="toasts"></div>
+
+  <script src="/assets/js/admin.js"></script>
+</body>
+</html>
