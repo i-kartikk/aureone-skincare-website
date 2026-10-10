@@ -235,7 +235,7 @@
               </div>
 
               <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3">
-                <a href="#deck" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
+                <a href="/shop" data-link class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
                   Shop The Ritual
                 </a>
                 <a href="#master-suite" class="bg-[#FFFFFF] text-[#211D19] hover:bg-[#F2EFE8] border border-[#B99A60]/30 px-7 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
@@ -354,7 +354,7 @@
       </section>
 
       <!-- SECTION 3: CLINICAL BESTSELLERS GRID (Inspired by Blabliblu dw-pc product cards) -->
-      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24" id="bestsellers">
+      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24" id="shop" data-section="bestsellers">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
             <div class="max-w-xl">
@@ -1303,6 +1303,12 @@
         <div class="success glass"><img src="${esc(state.settings.logo)}" alt=""><h1 class="display">Your bag is empty</h1>
         <p class="muted">Add a little radiance before checking out.</p><a href="/shop" data-link class="btn btn-gold" style="margin-top:16px">Shop the collection</a></div>`;
       const sub = bagSubtotal(), ship = shippingFor(sub);
+      const mrpTotal = items.reduce((sum, { p, qty, size }) => {
+        const comp = comparePriceFor(p, size);
+        const pr = priceFor(p, size);
+        return sum + (comp > pr ? comp : pr) * qty;
+      }, 0);
+      const retailSavings = mrpTotal > sub ? mrpTotal - sub : 0;
       return `
       <section class="page-hero" style="padding-bottom:30px"><div class="wrap reveal">
         <div class="eyebrow">Checkout</div>
@@ -1332,15 +1338,76 @@
           <div class="pay-opt"><span class="dot"></span><div><b>Cash on Delivery</b><div class="muted small">Pay when your ritual arrives.</div></div></div>
           <button class="btn btn-gold btn-block" type="submit" id="placeBtn" style="margin-top:26px">Place order · ${money(sub + ship)}</button>
         </form>
-        <aside class="co-card glass summary">
-          <div class="eyebrow">Summary</div>
-          <h2 class="display" style="font-size:28px;margin-bottom:10px">Your ritual</h2>
-          ${items.map(({ p, qty, size }) => { const price = priceFor(p, size); return `<div class="line-item"><img src="${esc(p.images[0])}" alt=""><div><b>${esc(p.name)}</b><small>${esc(size || p.size)} · Qty ${qty}</small></div><span>${money(price * qty)}</span></div>`; }).join('')}
-          <div class="totals" id="coTotals">
-            <div><span>Subtotal</span><span>${money(sub)}</span></div>
-            <div id="coDiscount" style="display:none"><span>Discount</span><span id="coDiscountAmt"></span></div>
-            <div><span>Shipping</span><span>${ship ? money(ship) : 'Complimentary'}</span></div>
-            <div class="grand"><span>Total</span><span id="coTotal">${money(sub + ship)}</span></div>
+        <aside class="co-card co-summary">
+          <div class="co-summary-header">
+            <div class="co-summary-title-row">
+              <div>
+                <div class="eyebrow">Order Summary</div>
+                <h2 class="display" style="font-size:24px;margin:6px 0 0">Your Ritual</h2>
+              </div>
+              <button type="button" class="co-edit-bag-btn" id="coEditBag" aria-label="Edit items in your bag">Edit Bag</button>
+            </div>
+            <p class="muted small" style="margin:6px 0 0">${items.reduce((s, i) => s + i.qty, 0)} item${items.reduce((s, i) => s + i.qty, 0) > 1 ? 's' : ''} in your bag</p>
+          </div>
+          <div class="co-items-list">
+            ${items.map(({ p, qty, size }) => { const price = priceFor(p, size); const comparePrice = comparePriceFor(p, size); return `
+            <div class="co-line-item">
+              <div class="co-line-img">
+                <img src="${esc(p.images[0])}" alt="${esc(p.name)}">
+                <span class="co-line-qty-badge">${qty}</span>
+              </div>
+              <div class="co-line-details">
+                <b class="co-line-name">${esc(p.name)}</b>
+                <span class="co-line-meta">${esc(size || p.size)}</span>
+                <div class="co-line-price-row">
+                  <span class="co-line-price">${money(price * qty)}</span>
+                  ${comparePrice > price ? `<s class="co-line-compare">${money(comparePrice * qty)}</s>` : ''}
+                </div>
+              </div>
+            </div>`; }).join('')}
+          </div>
+          <div class="co-totals-section" id="coTotals">
+            ${retailSavings > 0 ? `
+            <div class="co-total-row">
+              <span>Item MRP Total</span>
+              <span class="co-mrp-strike" id="coMrpVal">${money(mrpTotal)}</span>
+            </div>
+            <div class="co-total-row">
+              <span class="co-saving-label">Ritual Privilege Savings</span>
+              <span class="co-saving-val" id="coRetailSavings">-${money(retailSavings)}</span>
+            </div>` : ''}
+            <div class="co-total-row">
+              <span>Subtotal</span>
+              <span id="coSubtotalVal">${money(sub)}</span>
+            </div>
+            <div class="co-total-row" id="coDiscount" style="display:none">
+              <span id="coDiscountLabel">Coupon Discount</span>
+              <span class="co-discount-val" id="coDiscountAmt"></span>
+            </div>
+            <div class="co-total-row">
+              <span>Pan-India Shipping</span>
+              <span id="coShipVal" class="${ship ? '' : 'co-free-ship'}">${ship ? money(ship) : '✦ Complimentary'}</span>
+            </div>
+            <div class="co-total-row co-tax-row">
+              <span>Estimated Taxes & GST</span>
+              <span>Included in price</span>
+            </div>
+            <div class="co-total-grand">
+              <div>
+                <span class="co-grand-label">Grand Total</span>
+                <span class="co-grand-sub">All taxes & duties included</span>
+              </div>
+              <span class="co-grand-price" id="coTotal">${money(sub + ship)}</span>
+            </div>
+            ${retailSavings > 0 ? `
+            <div class="co-savings-banner" id="coSavingsBanner">
+              <span>✦ You are saving ${money(retailSavings)} on this ritual</span>
+            </div>` : ''}
+          </div>
+          <div class="co-trust-badges">
+            <span>🔒 Secure Checkout</span>
+            <span>🚚 Free Shipping ₹999+</span>
+            <span>✦ COD Available</span>
           </div>
           ${state.offers.length ? `<div class="co-offers">
             <div class="eyebrow" style="margin-bottom:10px">Available offers</div>
@@ -1482,20 +1549,52 @@
     let discount = 0;
     let couponCode = '';
 
+    // Open bag drawer directly from summary
+    $('#coEditBag')?.addEventListener('click', () => openDrawer(true));
+
     function updateTotals() {
       const sub = bagSubtotal();
       const effectiveSub = Math.max(0, sub - discount);
       const ship = effectiveSub <= 0 || sub >= state.settings.freeShippingThreshold ? 0 : Number(state.settings.shippingFee) || 0;
       const total = effectiveSub + ship;
+
+      const subEl = $('#coSubtotalVal');
+      if (subEl) subEl.textContent = money(sub);
+
       const discEl = $('#coDiscount');
-      if (discount > 0) {
-        discEl.style.display = '';
-        $('#coDiscountAmt').textContent = `-${money(discount)}`;
-      } else {
-        discEl.style.display = 'none';
+      if (discEl) {
+        if (discount > 0) {
+          discEl.style.display = '';
+          const discLbl = $('#coDiscountLabel');
+          if (discLbl) discLbl.textContent = couponCode ? `Coupon (${couponCode})` : 'Coupon Discount';
+          $('#coDiscountAmt').textContent = `-${money(discount)}`;
+        } else {
+          discEl.style.display = 'none';
+        }
       }
+
+      const shipEl = $('#coShipVal');
+      if (shipEl) {
+        shipEl.textContent = ship ? money(ship) : '✦ Complimentary';
+        shipEl.className = ship ? '' : 'co-free-ship';
+      }
+
       $('#coTotal').textContent = money(total);
       $('#placeBtn').textContent = `Place order · ${money(total)}`;
+
+      // Update total savings banner
+      const banner = $('#coSavingsBanner');
+      const items = bagItems();
+      const mrpTotal = items.reduce((sum, { p, qty, size }) => {
+        const comp = comparePriceFor(p, size);
+        const pr = priceFor(p, size);
+        return sum + (comp > pr ? comp : pr) * qty;
+      }, 0);
+      const totalSavings = (mrpTotal > sub ? mrpTotal - sub : 0) + discount;
+      if (banner && totalSavings > 0) {
+        banner.innerHTML = `<span>✦ You are saving ${money(totalSavings)} on this ritual</span>`;
+        banner.style.display = '';
+      }
     }
 
     // Click to paste coupon from offers
