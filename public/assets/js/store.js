@@ -221,10 +221,11 @@
       const prods = state.products || [];
       const categoryOrder = ['Cleanse', 'Treat', 'Moisturize', 'Protect'];
       const routineSteps = [
-        ['Cleanse', 'Lift away the day with a gentle cleanse that respects your skin barrier.'],
-        ['Treat', 'Target your skin goals with focused, barrier-conscious actives.'],
-        ['Moisturize', 'Restore lasting comfort and support your skin’s natural moisture barrier.'],
-        ['Protect', 'Finish your morning ritual with daily broad-spectrum sun protection.']
+        ['Cleanse', 'Lift away the day with a gentle cleanse that respects your skin barrier.', product => product.category === 'Cleanse'],
+        ['Treat', 'Target your skin goals with focused, barrier-conscious actives.', product => /niacinamide/i.test(`${product.name} ${product.subtitle || ''} ${(product.ingredients || []).map(ingredient => ingredient.name).join(' ')}`)],
+        ['Glow', 'Brighten and revive your complexion with vitamin C and daily consistency.', product => /vitamin c|bright|radiance/i.test(`${product.name} ${product.subtitle || ''} ${(product.benefits || []).join(' ')}`)],
+        ['Moisturize', 'Restore lasting comfort and support your skin’s natural moisture barrier.', product => product.category === 'Moisturize'],
+        ['Protect', 'Finish your morning ritual with daily broad-spectrum sun protection.', product => product.category === 'Protect']
       ];
       const featuredProducts = prods.filter(product => product.featured).sort((a, b) => {
         const categoryDifference = categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
@@ -312,22 +313,22 @@
         </div>
       </section>
 
-      <!-- SECTION 2: FOUR-STEP DAILY ROUTINE -->
+      <!-- SECTION 2: FIVE-STEP DAILY ROUTINE -->
       <section class="dw-deck-sec" id="routine">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="dw-deck-header">
             <span class="font-label-eyebrow text-[11px] uppercase text-[#A16207] tracking-[0.25em] font-semibold">A considered daily ritual</span>
             <h2 class="font-display-hero text-3xl sm:text-4xl text-[#1C1917] font-normal tracking-tight mt-1">
-              Four steps, in harmony
+              Five steps, in harmony
             </h2>
             <p class="font-body-md text-[#57534E] mt-2">
-              A simple rhythm for everyday skin care, from a gentle cleanse to daily protection.
+              A considered rhythm for everyday skin care: cleanse, treat, glow, moisturize, and protect.
             </p>
           </div>
 
           <div class="dw-deck-grid">
-            ${routineSteps.map(([category, description], index) => {
-              const product = prods.find(item => String(item.category).toLowerCase() === category.toLowerCase());
+            ${routineSteps.map(([category, description, matchesProduct], index) => {
+              const product = prods.find(matchesProduct);
               const image = product?.images?.[0] || '/assets/img/monogram.png';
               const href = product
                 ? `/product/${encodeURIComponent(product.slug || product.id)}`
