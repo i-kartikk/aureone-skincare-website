@@ -2398,6 +2398,49 @@ a[href], button:not(:disabled), [role="button"] { cursor: pointer; }
   display: block;
   margin: 0 auto;
 }
+.home-flow #hero a[href="/shop"] {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: linear-gradient(115deg, #1C1917 0%, #292320 48%, #1C1917 100%);
+  box-shadow: 0 8px 20px rgba(28, 25, 23, 0.18), inset 0 1px rgba(255, 255, 255, 0.14);
+  transition: color 250ms ease, background-color 250ms ease, box-shadow 250ms ease, transform 250ms ease;
+}
+.home-flow #hero a[href="/shop"]::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -60% -30%;
+  background: linear-gradient(112deg, transparent 42%, rgba(255, 255, 255, 0.34) 49%, rgba(255, 255, 255, 0.06) 54%, transparent 62%);
+  transform: translateX(-45%);
+  transition: transform 280ms ease;
+}
+.home-flow #hero a[href="/shop"]:hover,
+.home-flow #hero a[href="/shop"]:focus-visible {
+  background: linear-gradient(115deg, #854D0E 0%, #A16207 52%, #854D0E 100%);
+  box-shadow: 0 10px 24px rgba(133, 77, 14, 0.24), inset 0 1px rgba(255, 255, 255, 0.3);
+}
+.home-flow #hero a[href="/shop"]:hover::before,
+.home-flow #hero a[href="/shop"]:focus-visible::before { transform: translateX(45%); }
+.home-flow #routine .dw-deck-media {
+  width: 100%;
+  max-width: 210px;
+  height: auto;
+  aspect-ratio: 3 / 4;
+  margin: 0 auto 12px;
+  padding: 10px;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border-color: var(--dw-border);
+}
+.home-flow #routine .dw-deck-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+.home-flow #routine .dw-deck-card:hover .dw-deck-media { transform: none; }
 .home-flow .dw-pc,
 .home-flow .dw-deck-card { box-shadow: var(--card-shadow); }
 
@@ -2415,6 +2458,7 @@ a[href], button:not(:disabled), [role="button"] { cursor: pointer; }
 
 @media (prefers-reduced-motion: reduce) {
   .home-flow { scroll-behavior: auto; }
+  .home-flow #hero a[href="/shop"]::before { transition: none; }
 }
 
 /* Promo / Milestone Gift Tier Strip */

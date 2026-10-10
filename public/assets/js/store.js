@@ -221,7 +221,7 @@
       const prods = state.products || [];
       const categoryOrder = ['Cleanse', 'Treat', 'Moisturize', 'Protect'];
       const routineSteps = [
-        ['Cleanse', 'Lift away the day with a gentle cleanse that respects your skin barrier.', product => product.category === 'Cleanse'],
+        ['Clean', 'Lift away the day with a gentle cleanse that respects your skin barrier.', product => product.category === 'Cleanse'],
         ['Treat', 'Target your skin goals with focused, barrier-conscious actives.', product => /niacinamide/i.test(`${product.name} ${product.subtitle || ''} ${(product.ingredients || []).map(ingredient => ingredient.name).join(' ')}`)],
         ['Glow', 'Brighten and revive your complexion with vitamin C and daily consistency.', product => /vitamin c|bright|radiance/i.test(`${product.name} ${product.subtitle || ''} ${(product.benefits || []).join(' ')}`)],
         ['Moisturize', 'Restore lasting comfort and support your skin’s natural moisture barrier.', product => product.category === 'Moisturize'],
@@ -329,7 +329,7 @@
           <div class="dw-deck-grid">
             ${routineSteps.map(([category, description, matchesProduct], index) => {
               const product = prods.find(matchesProduct);
-              const image = product?.images?.[0] || '/assets/img/monogram.png';
+              const image = product?.cardImage || product?.images?.[0] || '/assets/img/monogram.png';
               const href = product
                 ? `/product/${encodeURIComponent(product.slug || product.id)}`
                 : `/shop?c=${encodeURIComponent(category)}`;
