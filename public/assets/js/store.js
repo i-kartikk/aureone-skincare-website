@@ -221,11 +221,11 @@
       const prods = state.products || [];
       const categoryOrder = ['Cleanse', 'Treat', 'Moisturize', 'Protect'];
       const routineSteps = [
-        ['Clean', 'Lift away the day with a gentle cleanse that respects your skin barrier.', product => product.category === 'Cleanse'],
-        ['Treat', 'Target your skin goals with focused, barrier-conscious actives.', product => /niacinamide/i.test(`${product.name} ${product.subtitle || ''} ${(product.ingredients || []).map(ingredient => ingredient.name).join(' ')}`)],
-        ['Glow', 'Brighten and revive your complexion with vitamin C and daily consistency.', product => /vitamin c|bright|radiance/i.test(`${product.name} ${product.subtitle || ''} ${(product.benefits || []).join(' ')}`)],
-        ['Moisturize', 'Restore lasting comfort and support your skin’s natural moisture barrier.', product => product.category === 'Moisturize'],
-        ['Protect', 'Finish your morning ritual with daily broad-spectrum sun protection.', product => product.category === 'Protect']
+        ['Clean', product => product.category === 'Cleanse'],
+        ['Treat', product => /niacinamide/i.test(`${product.name} ${product.subtitle || ''} ${(product.ingredients || []).map(ingredient => ingredient.name).join(' ')}`)],
+        ['Glow', product => /vitamin c|bright|radiance/i.test(`${product.name} ${product.subtitle || ''} ${(product.benefits || []).join(' ')}`)],
+        ['Moisturize', product => product.category === 'Moisturize'],
+        ['Protect', product => product.category === 'Protect']
       ];
       const featuredProducts = prods.filter(product => product.featured).sort((a, b) => {
         const categoryDifference = categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
@@ -327,7 +327,7 @@
           </div>
 
           <div class="dw-deck-grid">
-            ${routineSteps.map(([category, description, matchesProduct], index) => {
+            ${routineSteps.map(([category, matchesProduct], index) => {
               const product = prods.find(matchesProduct);
               const image = product?.cardImage || product?.images?.[0] || '/assets/img/monogram.png';
               const href = product
@@ -340,7 +340,6 @@
                 <img src="${esc(image)}" alt="${esc(product?.name || category)}" loading="lazy">
               </div>
               <span class="dw-deck-name">${esc(category)}</span>
-              <span class="dw-deck-sub">${esc(product?.name || description)}</span>
             </a>`;
             }).join('')}
           </div>
