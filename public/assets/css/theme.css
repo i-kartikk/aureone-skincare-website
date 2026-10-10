@@ -1,25 +1,26 @@
 :root {
-  --bg-main: #FAFAF9;
-  --ivory: #FAFAF9;
-  --ivory-2: #F5F5F4;
-  --ivory-3: #E7E5E4;
-  --sand: #D6D3D1;
-  --primary: #1C1917;
-  --accent: #A16207;
-  --gold: #A16207;
-  --gold-2: #A16207;
-  --gold-3: #D6D3D1;
-  --gold-deep: #854D0E;
-  --gold-light: rgba(161, 98, 7, 0.08);
-  --border-gold: #D6D3D1;
-  --text-main: #0C0A09;
-  --ink: #0C0A09;
-  --ink-2: #292524;
-  --muted: #57534E;
-  --muted-light: #57534E;
+  --bg-main: #F8F5EF;
+  --ivory: #F8F5EF;
+  --ivory-2: #EAE1D4;
+  --ivory-3: #A99A89;
+  --sand: #A99A89;
+  --primary: #211D19;
+  --accent: #B99A60;
+  --gold: #B99A60;
+  --gold-2: #B99A60;
+  --gold-3: #EAE1D4;
+  --gold-deep: #755D35;
+  --gold-text: #755D35;
+  --gold-light: rgba(185, 154, 96, 0.12);
+  --border-gold: rgba(185, 154, 96, 0.35);
+  --text-main: #211D19;
+  --ink: #211D19;
+  --ink-2: #57524C;
+  --muted: #57524C;
+  --muted-light: #A99A89;
   --card-bg: #FFFFFF;
   --white: #FFFFFF;
-  --border-subtle: #D6D3D1;
+  --border-subtle: #EAE1D4;
 
   --danger: #a4452f;
   --ok: #4f7a4a;
@@ -34,8 +35,8 @@
   --ease: cubic-bezier(.22, .8, .24, 1);
 
   /* Clean luxury surfaces */
-  --card-shadow: 0 4px 20px -6px rgba(28, 25, 23, 0.06);
-  --card-shadow-hover: 0 16px 36px -12px rgba(28, 25, 23, 0.12);
+  --card-shadow: 0 4px 20px -6px rgba(33, 29, 25, 0.06);
+  --card-shadow-hover: 0 16px 36px -12px rgba(33, 29, 25, 0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -71,7 +72,7 @@ input, select, textarea { font: inherit; color: inherit; }
   font-weight: 500;
   letter-spacing: .25em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .display {
   font-family: var(--serif);
@@ -82,17 +83,17 @@ input, select, textarea { font: inherit; color: inherit; }
   margin: 0;
 }
 .serif { font-family: var(--serif); }
-.script { font-family: var(--serif); color: var(--gold); font-weight: 400; font-style: italic; }
+.script { font-family: var(--serif); color: var(--gold-text); font-weight: 400; font-style: italic; }
 .muted { color: var(--muted); }
 
 .gold-text {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .gold-italic {
   font-family: var(--serif);
   font-style: italic;
   font-weight: 400;
-  color: var(--gold);
+  color: var(--gold-text);
 }
 
 /* Base Buttons */
@@ -108,7 +109,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn:active { transform: scale(.98); }
 
 .btn-gold {
-  color: #FFFFFF;
+  color: var(--ink);
   background: var(--gold);
   border: 1px solid var(--gold);
 }
@@ -123,8 +124,8 @@ input, select, textarea { font: inherit; color: inherit; }
   border: 1px solid var(--ink);
 }
 .btn-outline:hover {
-  color: var(--gold);
-  border-color: var(--gold);
+  color: var(--gold-text);
+  border-color: var(--gold-text);
 }
 
 .btn-ghost {
@@ -134,7 +135,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .btn-ghost:hover {
   background: var(--gold-light);
-  border-color: var(--gold);
+  border-color: var(--gold-text);
 }
 
 .btn-sm { --h: 38px; padding: 0 20px; font-size: 11px; }
@@ -154,7 +155,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: color .25s, background .25s, transform .25s var(--ease);
 }
 .icon-btn:hover {
-  color: var(--gold);
+  color: var(--gold-text);
   background: rgba(185, 154, 96, 0.08);
 }
 .icon-btn svg { width: 20px; height: 20px; }
@@ -171,7 +172,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .input:focus, .select:focus, .textarea:focus {
-  border-color: var(--gold);
+  border-color: var(--gold-text);
   box-shadow: 0 0 0 3px rgba(185, 154, 96, 0.16);
 }
 .select {
