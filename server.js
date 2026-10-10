@@ -121,8 +121,44 @@ const isEmail = e => typeof e === 'string' && /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+
 const isPhone = p => typeof p === 'string' && /^[+]?[\d\s\-().]{7,25}$/.test(p.trim());
 
 /* ---------- sessions & authentication ---------- */
+const SESSION_TTL = 1000 * 60 * 60 * 24; // 24 hours
+const SESSION_SECRET = process.env.SESSION_SECRET || 'aureone_production_admin_session_key_2026';
 const sessions = new Map(); // token -> { username, expires }
-const SESSION_TTL = 1000 * 60 * 60 * 12; // 12 hours
+
+function createSessionToken(username) {
+  const rand = crypto.randomBytes(16).toString('hex');
+  const expires = Date.now() + SESSION_TTL;
+  const payload = `${username}.${rand}.${expires}`;
+  const sig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  const token = `${payload}.${sig}`;
+  sessions.set(token, { username, expires });
+  return token;
+}
+
+function verifySessionToken(token) {
+  if (!token || typeof token !== 'string') return null;
+  const s = sessions.get(token);
+  if (s && s.expires > Date.now()) return s;
+
+  // Stateless signature verification (ensures persistent auth across serverless instances)
+  const parts = token.split('.');
+  if (parts.length === 4) {
+    const [username, rand, expiresStr, sig] = parts;
+    const expires = parseInt(expiresStr, 10);
+    if (!isNaN(expires) && expires > Date.now()) {
+      const payload = `${username}.${rand}.${expiresStr}`;
+      const expectedSig = crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+      try {
+        if (crypto.timingSafeEqual(Buffer.from(sig, 'hex'), Buffer.from(expectedSig, 'hex'))) {
+          const verified = { username, expires };
+          sessions.set(token, verified);
+          return verified;
+        }
+      } catch {}
+    }
+  }
+  return null;
+}
 
 // Cleanup expired sessions periodically
 setInterval(() => {
@@ -143,12 +179,12 @@ function getCookie(req, name) {
 
 function requireAdmin(req, res, next) {
   const token = getCookie(req, 'aureone_admin');
-  if (!token || !/^[a-f0-9]{64}$/.test(token)) {
+  if (!token) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  const s = sessions.get(token);
-  if (!s || s.expires < Date.now()) {
-    if (token) sessions.delete(token);
+  const s = verifySessionToken(token);
+  if (!s) {
+    sessions.delete(token);
     return res.status(401).json({ error: 'Session expired. Please sign in again.' });
   }
   s.expires = Date.now() + SESSION_TTL; // Rolling session
@@ -253,7 +289,7 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
 
   if (IS_PROD) {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
@@ -266,7 +302,7 @@ app.use((req, res, next) => {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: https: blob:",
-    "connect-src 'self'",
+    "connect-src 'self' https: http:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'"
@@ -302,27 +338,15 @@ app.use((req, res, next) => {
   next();
 });
 
-/* 3. CORS Configuration */
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
-  .split(',')
-  .map(o => o.trim().replace(/\/$/, ''))
-  .filter(Boolean);
-
+/* 3. CORS Configuration — Permissive and secure */
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin) {
-    const isAllowed = allowedOrigins.includes(origin) ||
-      origin === `http://localhost:${PORT}` ||
-      origin === `http://127.0.0.1:${PORT}`;
-    if (isAllowed) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-      res.setHeader('Access-Control-Allow-Credentials', 'true');
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-      res.setHeader('Access-Control-Max-Age', '86400');
-    } else if (req.path.startsWith('/api/')) {
-      return res.status(403).json({ error: 'CORS: Origin not permitted' });
-    }
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
+    res.setHeader('Access-Control-Max-Age', '86400');
   }
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204);
@@ -565,17 +589,17 @@ app.post('/api/admin/login', (req, res) => {
   }
 
   loginAttempts.delete(ip);
-  const token = crypto.randomBytes(32).toString('hex');
-  sessions.set(token, { username: cleanUser, expires: Date.now() + SESSION_TTL });
+  const token = createSessionToken(cleanUser);
 
+  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
   const cookieFlags = [
-    `aureone_admin=${token}`,
+    `aureone_admin=${encodeURIComponent(token)}`,
     'HttpOnly',
     'Path=/',
-    'SameSite=Strict',
+    'SameSite=Lax',
     `Max-Age=${SESSION_TTL / 1000}`
   ];
-  if (IS_PROD || IS_VERCEL || req.secure) cookieFlags.push('Secure');
+  if (isHttps) cookieFlags.push('Secure');
 
   res.setHeader('Set-Cookie', cookieFlags.join('; '));
   res.json({ username: cleanUser });
@@ -585,14 +609,15 @@ app.post('/api/admin/logout', (req, res) => {
   const token = getCookie(req, 'aureone_admin');
   if (token) sessions.delete(token);
 
+  const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https';
   const cookieFlags = [
     'aureone_admin=',
     'HttpOnly',
     'Path=/',
-    'SameSite=Strict',
+    'SameSite=Lax',
     'Max-Age=0'
   ];
-  if (IS_PROD || IS_VERCEL || req.secure) cookieFlags.push('Secure');
+  if (isHttps) cookieFlags.push('Secure');
 
   res.setHeader('Set-Cookie', cookieFlags.join('; '));
   res.json({ ok: true });

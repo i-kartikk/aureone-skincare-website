@@ -221,6 +221,20 @@ module.exports = function seed(hashPassword) {
       },
       {
         id: 'c2',
+        code: 'AUREONE10',
+        type: 'percent',
+        value: 10,
+        minOrder: 500,
+        maxDiscount: 250,
+        usageLimit: 200,
+        usageCount: 0,
+        validFrom: '2026-10-01',
+        validUntil: '2026-12-31',
+        active: true,
+        description: '10% privilege discount on all rituals (max ₹250 off)'
+      },
+      {
+        id: 'c3',
         code: 'RITUAL150',
         type: 'flat',
         value: 150,
@@ -234,18 +248,32 @@ module.exports = function seed(hashPassword) {
         description: 'Flat ₹150 off on orders above ₹1,499'
       },
       {
-        id: 'c3',
+        id: 'c4',
         code: 'GLOW20',
         type: 'percent',
         value: 20,
         minOrder: 1999,
         maxDiscount: 500,
-        usageLimit: 30,
+        usageLimit: 50,
         usageCount: 0,
         validFrom: '2026-10-01',
-        validUntil: '2026-11-30',
+        validUntil: '2026-12-31',
         active: true,
         description: '20% off on orders above ₹1,999 (max ₹500 off)'
+      },
+      {
+        id: 'c5',
+        code: 'AUREONE20',
+        type: 'percent',
+        value: 20,
+        minOrder: 1999,
+        maxDiscount: 500,
+        usageLimit: 50,
+        usageCount: 0,
+        validFrom: '2026-10-01',
+        validUntil: '2026-12-31',
+        active: true,
+        description: '20% festive celebration on orders above ₹1,999'
       }
     ]
   };
