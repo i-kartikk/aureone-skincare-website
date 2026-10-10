@@ -109,6 +109,8 @@
     const count = items.reduce((s, i) => s + i.qty, 0);
     $('#bagCount').textContent = count;
     $('#bagCount').dataset.n = count;
+    const mb = $('#mobileBagBadge');
+    if (mb) mb.textContent = count;
     if (!state.settings) return;
     const sub = bagSubtotal();
     const th = state.settings.freeShippingThreshold;
@@ -202,7 +204,7 @@
       const s = state.settings || {};
       const prods = state.products || [];
       return `
-      <!-- SECTION 1: HERO EDITORIAL -->
+      <!-- SECTION 1: HERO EDITORIAL (Inspired by Blabliblu dw-hero) -->
       <section class="relative w-full overflow-hidden bg-[#F8F5EF] py-12 lg:py-20 border-b border-[#B99A60]/15" id="hero">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
@@ -213,23 +215,34 @@
                 <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">The Art of Radiance</span>
               </div>
               <h1 class="font-display-hero text-4xl sm:text-5xl lg:text-[54px] text-[#211D19] tracking-tight font-normal leading-[1.12]">
-                Rituals for <span class="italic font-light text-[#B99A60]">Illuminated</span> Cellular Skin.
+                Rituals That Illuminate Every Skin — <span class="italic font-light text-[#B99A60]">Rice Veil, Radiance 5, Velvet Barrier</span>
               </h1>
               <p class="font-body-lg text-[16px] sm:text-[18px] text-[#57524C] font-light leading-relaxed">
                 Pure Care, Real Results, Radiant You. Crafted at the nexus of clinical precision and botanical potency—formulated with fermented rice extract, barrier ceramides, and stabilized bio-vitamins.
               </p>
-              <div class="pt-1 text-[#211D19] font-display-hero text-[20px] sm:text-[22px] italic text-[#B99A60]/95">
-                “Skin that feels like you, only brighter.”
+              
+              <!-- Value Ticker Pills (Blabliblu style) -->
+              <div class="flex flex-wrap gap-2 pt-1">
+                <span class="inline-flex items-center gap-1.5 bg-[#FFFFFF] border border-[#B99A60]/20 px-3 py-1 rounded-full text-[11px] text-[#211D19] font-medium shadow-sm">
+                  <span class="text-[#B99A60]">★</span> 4.9/5 Rating (870+ Verified Reviews)
+                </span>
+                <span class="inline-flex items-center gap-1.5 bg-[#FFFFFF] border border-[#B99A60]/20 px-3 py-1 rounded-full text-[11px] text-[#211D19] font-medium shadow-sm">
+                  <span class="text-[#B99A60]">✓</span> 100% Dermatologically Tested
+                </span>
+                <span class="inline-flex items-center gap-1.5 bg-[#FFFFFF] border border-[#B99A60]/20 px-3 py-1 rounded-full text-[11px] text-[#211D19] font-medium shadow-sm">
+                  <span class="text-[#B99A60]">✦</span> Bio-Fermented Actives
+                </span>
               </div>
-              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2">
-                <a href="#regimen" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
+
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3">
+                <a href="#deck" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
                   Shop The Ritual
                 </a>
-                <a href="#interactive-3d" class="bg-[#FFFFFF] text-[#211D19] hover:bg-[#F2EFE8] border border-[#B99A60]/30 px-7 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
-                  Discover The Formula
+                <a href="#master-suite" class="bg-[#FFFFFF] text-[#211D19] hover:bg-[#F2EFE8] border border-[#B99A60]/30 px-7 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
+                  Explore Master Suite
                 </a>
               </div>
-              <div class="pt-4 flex items-center gap-6 sm:gap-10 text-[#57524C]">
+              <div class="pt-3 flex items-center gap-6 sm:gap-10 text-[#57524C]">
                 <div>
                   <p class="font-display-hero text-2xl sm:text-3xl font-semibold text-[#211D19]">94%</p>
                   <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Clinical Radiance</p>
@@ -242,10 +255,11 @@
                 <div class="w-[1px] h-8 bg-[#B99A60]/25"></div>
                 <div>
                   <p class="font-display-hero text-2xl sm:text-3xl font-semibold text-[#211D19]">100%</p>
-                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Derm Considered</p>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Derm Evaluated</p>
                 </div>
               </div>
             </div>
+
             <!-- Visual Hero Media -->
             <div class="lg:col-span-6 relative">
               <div class="relative bg-[#FFFFFF] p-3 sm:p-4 rounded-2xl shadow-xl border border-[#B99A60]/20" id="hero3dScene">
@@ -268,16 +282,85 @@
         </div>
       </section>
 
+      <!-- SECTION 2: WHAT'S IN YOUR DECK (Inspired by Blabliblu dw-deck) -->
+      <section class="dw-deck-sec" id="deck">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="dw-deck-header">
+            <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">The Protocol Sequence</span>
+            <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight mt-1">
+              What’s in your deck
+            </h2>
+            <p class="font-body-md text-[#57524C] mt-2">
+              Every stage calibrated to work in biological synergy with your skin barrier. Select a protocol step to explore.
+            </p>
+          </div>
 
+          <div class="dw-deck-grid">
+            <a href="#p-rice-veil" class="dw-deck-card">
+              <span class="dw-deck-step">Step 01</span>
+              <div class="dw-deck-media">
+                <img src="/assets/img/card-rice-veil.jpg" alt="Rice Veil">
+              </div>
+              <span class="dw-deck-name">Rice Veil</span>
+              <span class="dw-deck-sub">Cleanse</span>
+            </a>
 
-      <!-- SECTION 2: COMPLETE 5-STEP REGIMEN -->
-      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24" id="regimen">
+            <a href="#p-radiance-5" class="dw-deck-card">
+              <span class="dw-deck-step">Step 02</span>
+              <div class="dw-deck-media">
+                <img src="/assets/img/card-radiance-5.jpg" alt="Radiance 5">
+              </div>
+              <span class="dw-deck-name">Radiance 5</span>
+              <span class="dw-deck-sub">Rebalance</span>
+            </a>
+
+            <a href="#p-bright-essence" class="dw-deck-card">
+              <span class="dw-deck-step">Step 03</span>
+              <div class="dw-deck-media">
+                <img src="/assets/img/card-bright-essence.jpg" alt="Bright Essence">
+              </div>
+              <span class="dw-deck-name">Bright Essence</span>
+              <span class="dw-deck-sub">Illuminate</span>
+            </a>
+
+            <a href="#p-velvet-barrier" class="dw-deck-card">
+              <span class="dw-deck-step">Step 04</span>
+              <div class="dw-deck-media">
+                <img src="/assets/img/card-velvet-barrier.jpg" alt="Velvet Barrier">
+              </div>
+              <span class="dw-deck-name">Velvet Barrier</span>
+              <span class="dw-deck-sub">Fortify</span>
+            </a>
+
+            <a href="#p-solar-veil" class="dw-deck-card">
+              <span class="dw-deck-step">Step 05</span>
+              <div class="dw-deck-media">
+                <img src="/assets/img/card-solar-veil.jpg" alt="Solar Veil">
+              </div>
+              <span class="dw-deck-name">Solar Veil</span>
+              <span class="dw-deck-sub">Defend</span>
+            </a>
+
+            <a href="#master-duo" class="dw-deck-card">
+              <span class="dw-deck-step" style="color:var(--dw-ink)">Curated</span>
+              <div class="dw-deck-media">
+                <img src="/assets/img/hero-ritual-bottles.jpg" alt="Master Sets">
+              </div>
+              <span class="dw-deck-name">Master Duos</span>
+              <span class="dw-deck-sub">Ceremonies</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: CLINICAL BESTSELLERS GRID (Inspired by Blabliblu dw-pc product cards) -->
+      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24" id="bestsellers">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
             <div class="max-w-xl">
               <div class="flex items-center gap-2 mb-2">
                 <span class="w-6 h-[1px] bg-[#B99A60]"></span>
-                <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.2em] font-semibold">The 5-Step Ceremony</span>
+                <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.2em] font-semibold">Clinical Bestsellers</span>
               </div>
               <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight">
                 Sequential Daily Regimen
@@ -287,206 +370,161 @@
               </p>
             </div>
             <div class="mt-4 md:mt-0 flex items-center gap-3">
-              <span class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B] bg-[#FAF8F3] px-3.5 py-1.5 border border-[#B99A60]/20 rounded-full">Sequence: 01 — 05</span>
+              <span class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B] bg-[#FFFFFF] px-3.5 py-1.5 border border-[#B99A60]/20 rounded-full shadow-sm">Sequence: 01 — 05</span>
             </div>
           </div>
 
-          <!-- Grid of 5 Products -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+          <!-- The 5 Blabliblu-styled Product Cards Grid -->
+          <div class="dw-pc-grid">
             <!-- Step 01: Rice Veil -->
-            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300">
-              <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 01</span>
-                  <span class="font-label-caption text-[11px] text-[#8C857B]">100 ml • 3.38 fl. oz.</span>
+            <article class="dw-pc" id="p-rice-veil">
+              <span class="new-budge">BESTSELLER</span>
+              <a href="/product/rice-veil" data-link class="dw-pc__img">
+                <img src="/assets/img/card-rice-veil.jpg" alt="Rice Veil Gentle Daily Face Wash" loading="lazy">
+              </a>
+              <div class="dw-pc__info">
+                <span class="dw-pc__cat">Step 01 • Cleanse</span>
+                <div class="dw-pc__t">
+                  <h3><a href="/product/rice-veil" data-link>Rice Veil Face Wash - 100 ML</a></h3>
+                  <div class="dw-pc__notes">Fermented Rice | Panthenol | Glycerin</div>
                 </div>
-                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
-                  <img alt="Rice Veil Gentle Daily Face Wash" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-rice-veil.jpg">
+                <div class="dw-pc__price">
+                  <b>₹649</b>
+                  <s>₹799</s>
+                  <span class="dw-discount">19% OFF</span>
                 </div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (128)</span>
-                </div>
-                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Rice Veil</h3>
-                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Gentle Daily Face Wash</p>
-                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
-                  Amino acid cleanser infused with fermented rice extract, provitamin panthenol, and natural hydration glycerin.
-                </p>
-                <div class="mt-3 flex flex-wrap gap-1">
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Rice Extract</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Panthenol</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">pH Balanced</span>
+                <div class="dw-pc__chips">
+                  <span>pH 5.5 Balanced</span>
+                  <span>All Skin Types</span>
+                  <span>Zero Tightness</span>
                 </div>
               </div>
-              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
-                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹649</span>
-                <button data-add="p1" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
-                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
-                  <span>Add</span>
-                </button>
-              </div>
-            </div>
+              <button class="dw-add" data-dw-add="p1" type="button" aria-label="Add Rice Veil to bag">
+                <span class="lbl">Add to bag</span>
+                <span class="ok" aria-hidden="true">Added ✓</span>
+              </button>
+            </article>
 
             <!-- Step 02: Radiance 5 -->
-            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300" id="cellular-serums">
-              <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 02</span>
-                  <span class="font-label-caption text-[11px] text-[#8C857B]">30 ml • 1.01 fl. oz.</span>
+            <article class="dw-pc" id="p-radiance-5">
+              <span class="new-budge gold">TOP RATED</span>
+              <a href="/product/radiance-5" data-link class="dw-pc__img">
+                <img src="/assets/img/card-radiance-5.jpg" alt="Radiance 5 Niacinamide Serum" loading="lazy">
+              </a>
+              <div class="dw-pc__info">
+                <span class="dw-pc__cat">Step 02 • Rebalance</span>
+                <div class="dw-pc__t">
+                  <h3><a href="/product/radiance-5" data-link>Radiance 5 Serum - 30 ML</a></h3>
+                  <div class="dw-pc__notes">Niacinamide 5% | Fermented Rice | Alpha Arbutin</div>
                 </div>
-                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
-                  <img alt="Radiance 5 Niacinamide Serum" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-radiance-5.jpg">
+                <div class="dw-pc__price">
+                  <b>₹849</b>
+                  <s>₹1,099</s>
+                  <span class="dw-discount">23% OFF</span>
                 </div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">5.0 (312)</span>
-                </div>
-                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Radiance 5</h3>
-                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Brightening Serum</p>
-                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
-                  Clinical 5% niacinamide with pure fermented rice extract, alpha arbutin, and panthenol 2% for oil & pore control.
-                </p>
-                <div class="mt-3 flex flex-wrap gap-1">
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Niacinamide 5%</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Rice Extract</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Tone Corrector</span>
+                <div class="dw-pc__chips">
+                  <span>Pore Refining</span>
+                  <span>Tone Corrector</span>
+                  <span>Oil Control</span>
                 </div>
               </div>
-              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
-                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹849</span>
-                <button data-add="p6" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
-                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
-                  <span>Add</span>
-                </button>
-              </div>
-            </div>
+              <button class="dw-add" data-dw-add="p6" type="button" aria-label="Add Radiance 5 to bag">
+                <span class="lbl">Add to bag</span>
+                <span class="ok" aria-hidden="true">Added ✓</span>
+              </button>
+            </article>
 
             <!-- Step 03: Bright Essence -->
-            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300">
-              <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 03</span>
-                  <span class="font-label-caption text-[11px] text-[#8C857B]">30 ml • 1.01 fl. oz.</span>
+            <article class="dw-pc" id="p-bright-essence">
+              <span class="new-budge">CLINICAL PICK</span>
+              <a href="/product/bright-essence" data-link class="dw-pc__img">
+                <img src="/assets/img/card-bright-essence.jpg" alt="Bright Essence Radiance Elixir" loading="lazy">
+              </a>
+              <div class="dw-pc__info">
+                <span class="dw-pc__cat">Step 03 • Illuminate</span>
+                <div class="dw-pc__t">
+                  <h3><a href="/product/bright-essence" data-link>Bright Essence - 30 ML</a></h3>
+                  <div class="dw-pc__notes">Vitamin C (3-O Ethyl) | Ferulic Acid | HA</div>
                 </div>
-                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
-                  <img alt="Bright Essence Vitamin C Serum" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-bright-essence.jpg">
+                <div class="dw-pc__price">
+                  <b>₹1,099</b>
+                  <s>₹1,299</s>
+                  <span class="dw-discount">15% OFF</span>
                 </div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (194)</span>
-                </div>
-                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Bright Essence</h3>
-                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Radiance Elixir</p>
-                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
-                  Antioxidant complex of stabilized Vitamin C (3-O Ethyl Ascorbic Acid), ferulic acid, and pure multimolecular hyaluronic acid.
-                </p>
-                <div class="mt-3 flex flex-wrap gap-1">
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Vitamin C</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Ferulic Acid</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Photoprotect</span>
+                <div class="dw-pc__chips">
+                  <span>Photoprotect</span>
+                  <span>Antioxidant</span>
+                  <span>Instant Glow</span>
                 </div>
               </div>
-              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
-                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹1,099</span>
-                <button data-add="p3" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
-                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
-                  <span>Add</span>
-                </button>
-              </div>
-            </div>
+              <button class="dw-add" data-dw-add="p3" type="button" aria-label="Add Bright Essence to bag">
+                <span class="lbl">Add to bag</span>
+                <span class="ok" aria-hidden="true">Added ✓</span>
+              </button>
+            </article>
 
             <!-- Step 04: Velvet Barrier -->
-            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300" id="creams">
-              <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 04</span>
-                  <span class="font-label-caption text-[11px] text-[#8C857B]">50 ml • 1.69 fl. oz.</span>
+            <article class="dw-pc" id="p-velvet-barrier">
+              <span class="new-budge gold">BARRIER REPAIR</span>
+              <a href="/product/velvet-barrier" data-link class="dw-pc__img">
+                <img src="/assets/img/card-velvet-barrier.jpg" alt="Velvet Barrier Repair Cream" loading="lazy">
+              </a>
+              <div class="dw-pc__info">
+                <span class="dw-pc__cat">Step 04 • Fortify</span>
+                <div class="dw-pc__t">
+                  <h3><a href="/product/velvet-barrier" data-link>Velvet Barrier Cream - 50 GM</a></h3>
+                  <div class="dw-pc__notes">Ceramide NP | Plant Squalane | Hyaluronic Matrix</div>
                 </div>
-                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
-                  <img alt="Velvet Barrier Repair Moisturizer" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-velvet-barrier.jpg">
+                <div class="dw-pc__price">
+                  <b>₹999</b>
+                  <s>₹1,199</s>
+                  <span class="dw-discount">17% OFF</span>
                 </div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (440)</span>
-                </div>
-                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Velvet Barrier</h3>
-                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">Barrier Repair Cream</p>
-                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
-                  Deep lipid reinforcement formulated with bio-ceramides, squalane, panthenol, and multi-depth sodium hyaluronate.
-                </p>
-                <div class="mt-3 flex flex-wrap gap-1">
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Ceramides</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Squalane</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Deep Recovery</span>
+                <div class="dw-pc__chips">
+                  <span>Lipid Lock</span>
+                  <span>Deep Recovery</span>
+                  <span>Velvet Cushion</span>
                 </div>
               </div>
-              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
-                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹999</span>
-                <button data-add="p4" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
-                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
-                  <span>Add</span>
-                </button>
-              </div>
-            </div>
+              <button class="dw-add" data-dw-add="p4" type="button" aria-label="Add Velvet Barrier to bag">
+                <span class="lbl">Add to bag</span>
+                <span class="ok" aria-hidden="true">Added ✓</span>
+              </button>
+            </article>
 
             <!-- Step 05: Solar Veil -->
-            <div class="group bg-[#FFFFFF] rounded-2xl p-5 border border-[#B99A60]/20 flex flex-col justify-between shadow-sm hover:shadow-md transition-all duration-300" id="solar-care">
-              <div>
-                <div class="flex items-center justify-between mb-3">
-                  <span class="font-label-caption text-[10px] text-[#B99A60] font-semibold bg-[#F8F5EF] px-2.5 py-1 rounded border border-[#B99A60]/20">STEP 05</span>
-                  <span class="font-label-caption text-[11px] text-[#8C857B]">50 ml • 1.69 fl. oz.</span>
+            <article class="dw-pc" id="p-solar-veil">
+              <span class="new-budge">NEW LAUNCH</span>
+              <a href="/product/solar-veil" data-link class="dw-pc__img">
+                <img src="/assets/img/card-solar-veil.jpg" alt="Solar Veil Daily Sunscreen SPF 50" loading="lazy">
+              </a>
+              <div class="dw-pc__info">
+                <span class="dw-pc__cat">Step 05 • Defend</span>
+                <div class="dw-pc__t">
+                  <h3><a href="/product/solar-veil" data-link>Solar Veil SPF 50 - 50 ML</a></h3>
+                  <div class="dw-pc__notes">Ceramides | Squalane | Vitamin E | UVA/UVB</div>
                 </div>
-                <div class="relative w-full h-[300px] rounded-xl bg-[#FAF8F3] mb-4 flex items-center justify-center p-3 border border-[#B99A60]/10 overflow-hidden">
-                  <img alt="Solar Veil Daily Sunscreen SPF 50" class="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" src="/assets/img/card-solar-veil.jpg">
+                <div class="dw-pc__price">
+                  <b>₹799</b>
+                  <s>₹999</s>
+                  <span class="dw-discount">20% OFF</span>
                 </div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-1.5">
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="font-label-caption text-[11px] text-[#57524C] ml-1 font-semibold">4.9 (205)</span>
-                </div>
-                <h3 class="font-display-hero text-[19px] text-[#211D19] font-medium leading-snug">Solar Veil</h3>
-                <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider mt-0.5">SPF 50 PA++++ Shield</p>
-                <p class="font-body-sm text-[13px] text-[#57524C] mt-2 line-clamp-2 leading-relaxed">
-                  Weightless broad spectrum shield with ceramides, squalane, and vitamin E. Zero white cast, non-comedogenic velvet finish.
-                </p>
-                <div class="mt-3 flex flex-wrap gap-1">
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">SPF 50 PA++++</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Invisible Finish</span>
-                  <span class="bg-[#F8F5EF] text-[#57524C] text-[10px] px-2 py-0.5 rounded border border-[#B99A60]/15 font-label-caption">Non-Greasy</span>
+                <div class="dw-pc__chips">
+                  <span>Zero White Cast</span>
+                  <span>Non-Comedogenic</span>
+                  <span>Dewy Finish</span>
                 </div>
               </div>
-              <div class="mt-5 pt-3 flex items-center justify-between border-t border-[#B99A60]/15">
-                <span class="font-display-hero text-[21px] text-[#211D19] font-normal">₹799</span>
-                <button data-add="p5" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-4 py-2.5 rounded text-[11px] font-label-button uppercase tracking-wider transition-colors flex items-center gap-1.5 shadow-sm">
-                  <span class="material-symbols-outlined text-[14px]">shopping_bag</span>
-                  <span>Add</span>
-                </button>
-              </div>
-            </div>
+              <button class="dw-add" data-dw-add="p5" type="button" aria-label="Add Solar Veil to bag">
+                <span class="lbl">Add to bag</span>
+                <span class="ok" aria-hidden="true">Added ✓</span>
+              </button>
+            </article>
           </div>
         </div>
       </section>
 
-      <!-- SECTION 3: 3D INTERACTIVE FLACON & CELLULAR ATELIER SHOWCASE -->
+      <!-- SECTION 4: 3D INTERACTIVE FLACON & CELLULAR ATELIER SHOWCASE -->
       <section class="w-full bg-[#FAF8F3] py-16 lg:py-24 border-y border-[#B99A60]/20 relative overflow-hidden" id="interactive-3d">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="text-center max-w-2xl mx-auto mb-10">
@@ -504,7 +542,6 @@
           </div>
 
           <div class="bg-[#FFFFFF] border border-[#B99A60]/25 rounded-3xl p-6 sm:p-10 shadow-sm relative">
-            <!-- Interactive Cue Header -->
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#B99A60]/15">
               <div class="flex items-center gap-3">
                 <span class="flex h-3 w-3 relative">
@@ -555,11 +592,11 @@
         </div>
       </section>
 
-      <!-- SECTION 4: CLINICAL SPOTLIGHT & MASTER DUO -->
-      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24">
+      <!-- SECTION 5: DEAL OF THE DAY — THE EQUILIBRIUM MASTER DUO -->
+      <section class="w-full bg-[#F8F5EF] py-16 lg:py-24" id="master-duo">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="text-center max-w-2xl mx-auto mb-16">
-            <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Clinical Duo Spotlight</span>
+            <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Deal of the Day</span>
             <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight mt-1">
               Cellular Equilibrium in Two Steps
             </h2>
@@ -569,7 +606,7 @@
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            <!-- Visual Gallery Pair - Uncropped Cards -->
+            <!-- Visual Gallery Pair -->
             <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div class="bg-[#FFFFFF] p-5 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
                 <div class="w-full h-[320px] bg-[#FAF8F3] rounded-xl p-3 flex items-center justify-center overflow-hidden border border-[#B99A60]/10">
@@ -594,7 +631,7 @@
               </div>
             </div>
 
-            <!-- Clinical Efficacy & Ingredient Breakdown -->
+            <!-- Clinical Efficacy & Bundle Card -->
             <div class="lg:col-span-6 space-y-6">
               <div class="grid grid-cols-3 gap-3 bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm text-center">
                 <div>
@@ -614,7 +651,7 @@
                 </div>
               </div>
 
-              <!-- Master Duo Bundle Card in INR -->
+              <!-- Master Duo Bundle Card -->
               <div class="bg-[#FAF8F3] p-6 rounded-2xl border border-[#B99A60]/25">
                 <div class="flex items-center justify-between mb-2">
                   <span class="font-label-eyebrow text-[10px] uppercase text-[#B99A60] tracking-widest font-semibold">Special Harmonized Pairing</span>
@@ -661,8 +698,8 @@
         </div>
       </section>
 
-      <!-- SECTION 5: THE COMPLETE 5-STEP RADIANCE SUITE (MASTER SET) IN INR -->
-      <section class="w-full bg-[#FAF8F3] py-16 lg:py-24 border-t border-[#B99A60]/20">
+      <!-- SECTION 6: THE COMPLETE 5-STEP RADIANCE SUITE (MASTER SET) -->
+      <section class="w-full bg-[#FAF8F3] py-16 lg:py-24 border-t border-[#B99A60]/20" id="master-suite">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="bg-[#FFFFFF] rounded-3xl border border-[#B99A60]/25 shadow-sm p-6 sm:p-12">
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
@@ -725,7 +762,7 @@
                   </div>
                   <div class="flex items-center gap-2.5 text-[#B99A60] pt-1 font-medium">
                     <span class="material-symbols-outlined text-[18px]">card_giftcard</span>
-                    <span class="font-body-sm text-[13px]">Complimentary Gold Spatula & Organic Travel Pouch</span>
+                    <span class="font-body-sm text-[13px]">Complimentary Gold Spatula & Organic Linen Travel Pouch</span>
                   </div>
                 </div>
 
@@ -752,7 +789,7 @@
         </div>
       </section>
 
-      <!-- SECTION 6: EDITORIAL BRAND STORY -->
+      <!-- SECTION 7: EDITORIAL BRAND STORY & PHILOSOPHY -->
       <section class="w-full bg-[#F8F5EF] py-16 lg:py-24">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
@@ -841,8 +878,8 @@
         </div>
       </section>
 
-      <!-- SECTION 7: VOICES OF RADIANCE (REVIEWS) -->
-      <section class="w-full bg-[#FAF8F3] py-16 lg:py-20 border-t border-[#B99A60]/20">
+      <!-- SECTION 8: VOICES OF RADIANCE (Blabliblu dw-tc Testimonials) -->
+      <section class="w-full bg-[#FAF8F3] py-16 lg:py-20 border-t border-[#B99A60]/20" id="reviews">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 text-center">
           <div class="inline-flex items-center gap-2 mb-3">
             <span class="w-8 h-[1px] bg-[#B99A60]"></span>
@@ -850,83 +887,190 @@
             <span class="w-8 h-[1px] bg-[#B99A60]"></span>
           </div>
           <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight">Verified Ritual Experiences</h2>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10 text-left">
-            <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
-              <div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-3">
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                </div>
-                <p class="font-body-md text-[14px] text-[#211D19] italic leading-relaxed">
-                  “Radiance 5 smoothed persistent pigmentation around my cheekbones within 3 weeks. It absorbs like morning dew with zero stickiness.”
-                </p>
-              </div>
-              <div class="mt-6 pt-4 border-t border-[#B99A60]/15 flex items-center justify-between">
-                <div>
-                  <p class="font-label-button text-[12px] uppercase text-[#211D19] font-semibold">Ananya R.</p>
-                  <p class="font-label-caption text-[11px] text-[#8C857B]">Verified Collector • Mumbai</p>
-                </div>
-                <span class="font-label-caption text-[10px] text-[#B99A60] uppercase bg-[#FAF8F3] px-2.5 py-1 rounded border border-[#B99A60]/20 font-medium">Radiance 5</span>
-              </div>
-            </div>
+          <p class="font-body-md text-[#57524C] mt-2 max-w-xl mx-auto">
+            Honest feedback from individuals who made Aureoné their daily ceremonial anchor.
+          </p>
 
-            <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
+          <div class="dw-testi-grid mt-12 text-left">
+            <figure class="dw-tc">
               <div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-3">
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                <div class="dw-tc__stars">
+                  <svg width="96" height="18" viewBox="0 0 108 18" fill="currentColor">
+                    <g fill="#B99A60">
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(22.4 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(44.8 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(67.2 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(89.6 0)"/>
+                    </g>
+                  </svg>
                 </div>
-                <p class="font-body-md text-[14px] text-[#211D19] italic leading-relaxed">
-                  “Velvet Barrier saved my compromised skin barrier during winter travel. Cushiony, rich yet perfectly breathable underneath daily makeup.”
-                </p>
+                <blockquote class="dw-tc__q">
+                  “Radiance 5 smoothed persistent post-blemish pigmentation around my cheekbones within 3 weeks. It absorbs like morning dew with zero stickiness.”
+                </blockquote>
               </div>
-              <div class="mt-6 pt-4 border-t border-[#B99A60]/15 flex items-center justify-between">
+              <figcaption>
                 <div>
-                  <p class="font-label-button text-[12px] uppercase text-[#211D19] font-semibold">Priya K.</p>
-                  <p class="font-label-caption text-[11px] text-[#8C857B]">Verified Collector • New Delhi</p>
+                  <p class="dw-tc__who">Ananya R.</p>
+                  <p class="dw-tc__what">Verified Collector • Mumbai</p>
                 </div>
-                <span class="font-label-caption text-[10px] text-[#B99A60] uppercase bg-[#FAF8F3] px-2.5 py-1 rounded border border-[#B99A60]/20 font-medium">Velvet Barrier</span>
-              </div>
-            </div>
+                <span class="dw-tc__prod">Radiance 5</span>
+              </figcaption>
+            </figure>
 
-            <div class="bg-[#FFFFFF] p-6 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
+            <figure class="dw-tc">
               <div>
-                <div class="flex items-center gap-1 text-[#B99A60] mb-3">
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
-                  <span class="material-symbols-outlined text-[16px]" style="font-variation-settings: 'FILL' 1;">star</span>
+                <div class="dw-tc__stars">
+                  <svg width="96" height="18" viewBox="0 0 108 18" fill="currentColor">
+                    <g fill="#B99A60">
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(22.4 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(44.8 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(67.2 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(89.6 0)"/>
+                    </g>
+                  </svg>
                 </div>
-                <p class="font-body-md text-[14px] text-[#211D19] italic leading-relaxed">
+                <blockquote class="dw-tc__q">
+                  “Velvet Barrier saved my compromised skin barrier during dry winter travel. Cushiony, rich yet perfectly breathable underneath daily makeup.”
+                </blockquote>
+              </div>
+              <figcaption>
+                <div>
+                  <p class="dw-tc__who">Priya K.</p>
+                  <p class="dw-tc__what">Verified Collector • New Delhi</p>
+                </div>
+                <span class="dw-tc__prod">Velvet Barrier</span>
+              </figcaption>
+            </figure>
+
+            <figure class="dw-tc">
+              <div>
+                <div class="dw-tc__stars">
+                  <svg width="96" height="18" viewBox="0 0 108 18" fill="currentColor">
+                    <g fill="#B99A60">
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(22.4 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(44.8 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(67.2 0)"/>
+                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(89.6 0)"/>
+                    </g>
+                  </svg>
+                </div>
+                <blockquote class="dw-tc__q">
                   “Solar Veil has absolute zero white cast on warm Indian skin tones. Melts like an exquisite serum while offering true SPF 50 PA++++ protection.”
-                </p>
+                </blockquote>
               </div>
-              <div class="mt-6 pt-4 border-t border-[#B99A60]/15 flex items-center justify-between">
+              <figcaption>
                 <div>
-                  <p class="font-label-button text-[12px] uppercase text-[#211D19] font-semibold">Devika M.</p>
-                  <p class="font-label-caption text-[11px] text-[#8C857B]">Verified Collector • Bengaluru</p>
+                  <p class="dw-tc__who">Devika M.</p>
+                  <p class="dw-tc__what">Verified Collector • Bengaluru</p>
                 </div>
-                <span class="font-label-caption text-[10px] text-[#B99A60] uppercase bg-[#FAF8F3] px-2.5 py-1 rounded border border-[#B99A60]/20 font-medium">Solar Veil</span>
+                <span class="dw-tc__prod">Solar Veil</span>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 9: ACCORDION FAQS (Blabliblu dw-faq style) -->
+      <section class="dw-faq-sec" id="faqs">
+        <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="dw-faq-wrap">
+            <div class="dw-faq-header">
+              <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">Concierge & Answers</span>
+              <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight mt-1">
+                Frequently Asked Questions
+              </h2>
+              <p class="font-body-md text-[#57524C] mt-2">
+                Everything you need to know about our formulations, clinical layering, and orders.
+              </p>
+            </div>
+
+            <div class="dw-acc-list">
+              <div class="dw-acc open">
+                <button type="button" class="dw-acc__q" aria-expanded="true">
+                  <span>How should I layer the 5-step Aureoné ritual?</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="dw-acc__a">
+                  <p>
+                    Follow the bio-absorption order: begin with <strong>Step 01 Rice Veil</strong> to cleanse. In the morning, follow with <strong>Step 03 Bright Essence (Vitamin C)</strong>, moisturize with <strong>Step 04 Velvet Barrier</strong>, and shield with <strong>Step 05 Solar Veil SPF 50</strong>. In the evening, cleanse with Rice Veil, treat with <strong>Step 02 Radiance 5 (Niacinamide)</strong>, and seal overnight recovery with Velvet Barrier.
+                  </p>
+                </div>
+              </div>
+
+              <div class="dw-acc">
+                <button type="button" class="dw-acc__q" aria-expanded="false">
+                  <span>Are Aureoné products suitable for sensitive or acne-prone skin?</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="dw-acc__a">
+                  <p>
+                    Yes, absolutely. All our formulations are 100% non-comedogenic, fragrance-neutral, and formulated without sulfates, parabens, drying alcohols, or synthetic colorants. Radiance 5 contains 5% Niacinamide with soothing rice extract and panthenol specifically calibrated not to trigger purging or irritation.
+                  </p>
+                </div>
+              </div>
+
+              <div class="dw-acc">
+                <button type="button" class="dw-acc__q" aria-expanded="false">
+                  <span>When can I expect to see visible results?</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="dw-acc__a">
+                  <p>
+                    Skin hydration and barrier comfort are noticeable immediately after the first application. Clinical tone evening, reduced redness, and pore refinement typically become visibly distinct within 14 to 21 days of continuous morning and evening ritual use.
+                  </p>
+                </div>
+              </div>
+
+              <div class="dw-acc">
+                <button type="button" class="dw-acc__q" aria-expanded="false">
+                  <span>What makes bio-fermented rice extract so effective?</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="dw-acc__a">
+                  <p>
+                    Bio-fermentation breaks down complex amino acids and antioxidants into low-molecular-weight peptides that penetrate the cellular stratum corneum effortlessly, stimulating collagen synthesis and barrier moisture retention without heavy film formers.
+                  </p>
+                </div>
+              </div>
+
+              <div class="dw-acc">
+                <button type="button" class="dw-acc__q" aria-expanded="false">
+                  <span>What are your delivery timelines and is COD available?</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="dw-acc__a">
+                  <p>
+                    Orders are processed within 24 hours from our atelier. Express delivery across metro cities in India takes 2–3 business days, and 3–5 days for other regions. Cash on Delivery (COD) as well as all major UPI, Cards, and Net Banking options are fully supported at checkout.
+                  </p>
+                </div>
+              </div>
+
+              <div class="dw-acc">
+                <button type="button" class="dw-acc__q" aria-expanded="false">
+                  <span>Are Aureoné products 100% cruelty-free?</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 9l6 6 6-6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="dw-acc__a">
+                  <p>
+                    Yes. We never test on animals at any stage of product development, and we adhere to rigorous ethical sourcing standards. All our packaging is crafted from recyclable glass flacons and FSC-certified paperboard.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- NEWSLETTER SECTION -->
+      <!-- SECTION 10: THE PRIVATE GAZETTE / VIP NEWSLETTER -->
       <section class="w-full bg-[#FAF8F3] py-14 border-t border-[#B99A60]/20">
         <div class="max-w-4xl mx-auto px-6 text-center">
           <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">The Private Gazette</span>
           <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight mt-1">Receive Private Allocations</h2>
           <p class="font-body-md text-[15px] text-[#57524C] mt-2 max-w-xl mx-auto">
-            Invitations to slow botanical harvests, seasonal formulations, and private clinical research papers.
+            Unlock 10% privilege on your first ritual allocation, plus invitations to botanical harvests and seasonal releases.
           </p>
           <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mt-6" data-sub>
             <input class="flex-1 bg-[#FFFFFF] border border-[#B99A60]/30 px-5 py-3.5 rounded text-[#211D19] font-body-sm text-[14px] placeholder:text-[#8C857B] focus:outline-none focus:ring-1 focus:ring-[#B99A60]" name="email" placeholder="Enter your email address" type="email" required>
@@ -1755,6 +1899,30 @@
     if (link && !e.metaKey && !e.ctrlKey && !e.shiftKey && link.origin === location.origin) {
       e.preventDefault();
       return navigate(link.pathname + link.search);
+    }
+    const dwAdd = e.target.closest('.dw-add, [data-dw-add]');
+    if (dwAdd) {
+      e.preventDefault();
+      const pid = dwAdd.dataset.dwAdd || dwAdd.dataset.add;
+      addToBag(pid);
+      dwAdd.classList.add('is-done');
+      setTimeout(() => dwAdd.classList.remove('is-done'), 1800);
+      return openDrawer();
+    }
+    const accBtn = e.target.closest('.dw-acc__q');
+    if (accBtn) {
+      e.preventDefault();
+      const acc = accBtn.closest('.dw-acc');
+      const isCurrentlyOpen = acc.classList.contains('open');
+      acc.closest('.dw-acc-list')?.querySelectorAll('.dw-acc').forEach(a => {
+        a.classList.remove('open');
+        a.querySelector('.dw-acc__q')?.setAttribute('aria-expanded', 'false');
+      });
+      if (!isCurrentlyOpen) {
+        acc.classList.add('open');
+        accBtn.setAttribute('aria-expanded', 'true');
+      }
+      return;
     }
     const add = e.target.closest('[data-add]');
     if (add) { e.preventDefault(); addToBag(add.dataset.add); return openDrawer(); }
