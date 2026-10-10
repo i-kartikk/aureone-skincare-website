@@ -1,47 +1,31 @@
-/* AUREONÉ — Design System & Tokens
-   Color Palette Specification:
-   - Main background — Clean Ivory: #F8F5EF (Plain, warm, uniform. No texture or gradient.)
-   - Accent — Muted Champagne Gold: #B99A60 (For small accents, thin borders and selected highlights.)
-   - Typography — Soft Black: #211D19 (For headings, body copy and navigation.)
-   - Cards — Pure White: #FFFFFF (For product cards and clean content sections.)
-*/
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&family=Pinyon+Script&display=swap');
-
 :root {
-  /* 1. Main background — Clean Ivory */
-  --bg-main: #F8F5EF;
-  --ivory: #F8F5EF;
-  --ivory-2: #F2EDE4;
-  --ivory-3: #EBE4D5;
-  --sand: #E2D5C0;
-
-  /* 2. Accent — Muted Champagne Gold */
-  --accent: #B99A60;
-  --gold: #B99A60;
-  --gold-2: #C8AE7A;
-  --gold-3: #E3D4B6;
-  --gold-deep: #8E733F;
-  --gold-light: rgba(185, 154, 96, 0.12);
-  --border-gold: rgba(185, 154, 96, 0.35);
-
-  /* 3. Typography — Soft Black */
-  --text-main: #211D19;
-  --ink: #211D19;
-  --ink-2: #423C35;
-  --muted: #7E766C;
-  --muted-light: #A39B90;
-
-  /* 4. Cards — Pure White */
+  --bg-main: #FAFAF9;
+  --ivory: #FAFAF9;
+  --ivory-2: #F5F5F4;
+  --ivory-3: #E7E5E4;
+  --sand: #D6D3D1;
+  --primary: #1C1917;
+  --accent: #A16207;
+  --gold: #A16207;
+  --gold-2: #A16207;
+  --gold-3: #D6D3D1;
+  --gold-deep: #854D0E;
+  --gold-light: rgba(161, 98, 7, 0.08);
+  --border-gold: #D6D3D1;
+  --text-main: #0C0A09;
+  --ink: #0C0A09;
+  --ink-2: #292524;
+  --muted: #57534E;
+  --muted-light: #57534E;
   --card-bg: #FFFFFF;
   --white: #FFFFFF;
-  --border-subtle: rgba(33, 29, 25, 0.08);
+  --border-subtle: #D6D3D1;
 
   --danger: #a4452f;
   --ok: #4f7a4a;
 
   --serif: 'Cormorant Garamond', 'Times New Roman', serif;
-  --sans: 'Jost', 'Helvetica Neue', Arial, sans-serif;
-  --script: 'Pinyon Script', cursive;
+  --sans: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
 
   --r-sm: 8px;
   --r: 16px;
@@ -50,8 +34,8 @@
   --ease: cubic-bezier(.22, .8, .24, 1);
 
   /* Clean luxury surfaces */
-  --card-shadow: 0 4px 20px -6px rgba(33, 29, 25, 0.06);
-  --card-shadow-hover: 0 16px 36px -12px rgba(185, 154, 96, 0.22);
+  --card-shadow: 0 4px 20px -6px rgba(28, 25, 23, 0.06);
+  --card-shadow-hover: 0 16px 36px -12px rgba(28, 25, 23, 0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -98,7 +82,7 @@ input, select, textarea { font: inherit; color: inherit; }
   margin: 0;
 }
 .serif { font-family: var(--serif); }
-.script { font-family: var(--script); color: var(--gold); font-weight: 400; }
+.script { font-family: var(--serif); color: var(--gold); font-weight: 400; font-style: italic; }
 .muted { color: var(--muted); }
 
 .gold-text {
@@ -157,6 +141,11 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn-block { width: 100%; }
 .btn[disabled] { opacity: .5; pointer-events: none; }
 
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
 .icon-btn {
   width: 40px; height: 40px; border-radius: 50%;
   display: inline-grid; place-items: center;
@@ -210,4 +199,5 @@ input, select, textarea { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .reveal { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
 }
