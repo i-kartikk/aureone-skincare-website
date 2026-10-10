@@ -38,6 +38,7 @@ body { min-height: 100vh; background: #ffffff; }
 .side-foot { display: grid; gap: 8px; }
 
 .main { min-width: 0; display: flex; flex-direction: column; gap: 18px; }
+#view { min-width: 0; }
 .top { display: flex; align-items: center; gap: 16px; padding: 18px 24px; border-radius: var(--r); position: sticky; top: 18px; z-index: 20; }
 .top h1 { font-size: 34px; margin-top: 2px; }
 .top .eyebrow { font-size: 10.5px; }
@@ -139,10 +140,33 @@ tbody tr:hover { background: rgba(255, 255, 255, .5); }
   .side { position: fixed; z-index: 60; left: 12px; top: 12px; bottom: 12px; height: auto; width: 260px; transform: translateX(-120%); transition: transform .5s var(--ease); background: var(--glass-bg-strong); }
   .side.open { transform: none; }
   .side-toggle { display: inline-grid; }
-  .top { top: 12px; padding: 14px 16px; }
+  .top { top: 12px; padding: 14px 16px; flex-wrap: wrap; }
   .top h1 { font-size: 26px; }
+  .top-actions { width: 100%; margin-left: 0; }
+  .top-actions > * { min-width: 0; }
+  .panel { min-width: 0; padding: 18px; }
+  .table-wrap { max-width: 100%; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
   .form-grid, .form-grid.three, .order-detail { grid-template-columns: 1fr; }
   .var-row { grid-template-columns: 1fr 1fr 36px; }
   .modal-wrap { padding: 8px; }
   .modal-head, .modal-body, .modal-foot { padding-inline: 18px; }
+}
+@media (max-width: 520px) {
+  .shell { padding: 8px; }
+  .main { gap: 12px; }
+  .top { gap: 10px; padding: 12px; }
+  .top h1 { font-size: 23px; }
+  .top-actions { gap: 8px; }
+  .top-actions .input { flex: 1 1 100%; max-width: none; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { min-width: 0; padding: 14px; }
+  .stat strong { font-size: 30px; overflow-wrap: anywhere; }
+  .panel { padding: 14px; }
+  .panel-head h2 { font-size: 22px; }
+  .modal { max-height: calc(100vh - 16px); }
+  .modal-head, .modal-body, .modal-foot { padding: 14px; }
+  .modal-head h2 { font-size: 24px; }
+  .modal-foot { flex-wrap: wrap; }
+  .modal-foot .btn { flex: 1 1 auto; }
+  .row-actions { flex-wrap: wrap; }
 }

@@ -3,6 +3,7 @@ const multer = require('multer');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { neon } = require('@neondatabase/serverless');
 const seed = require('./seed');
 
 /* ---------- load environment variables safely ---------- */
@@ -34,6 +35,8 @@ if (!process.env.NODE_ENV) {
 }
 const IS_PROD = process.env.NODE_ENV === 'production';
 const IS_VERCEL = !!process.env.VERCEL;
+const POSTGRES_URL = process.env.POSTGRES_URL;
+const postgresSql = POSTGRES_URL ? neon(POSTGRES_URL) : null;
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 const DATA_DIR = IS_VERCEL ? '/tmp/aureone/data' : path.join(ROOT, 'data');
@@ -74,6 +77,7 @@ if (fs.existsSync(DB_FILE)) {
     if (!db.subscribers) db.subscribers = [];
     if (!db.reviews) db.reviews = [];
     if (!db.orders) db.orders = [];
+    if (!db.customers) db.customers = [];
   } catch (err) {
     console.error('Error reading db.json, reseeding safely:', err.message);
     db = seed(hashPassword);
@@ -81,6 +85,7 @@ if (fs.existsSync(DB_FILE)) {
   }
 } else {
   db = seed(hashPassword);
+  if (!db.customers) db.customers = [];
   save();
   console.log('Created data/db.json with starter content.');
 }
@@ -97,6 +102,173 @@ function save() {
   const tmp = DB_FILE + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(db, null, 2), { mode: 0o600 });
   fs.renameSync(tmp, DB_FILE);
+}
+
+let postgresSchemaReady;
+async function ensurePostgresSchema() {
+  if (!postgresSql) throw new Error('POSTGRES_URL is not configured');
+  if (!postgresSchemaReady) {
+    postgresSchemaReady = (async () => {
+      await postgresSql`
+        CREATE TABLE IF NOT EXISTS aureone_customers (
+          id TEXT PRIMARY KEY,
+          email TEXT NOT NULL UNIQUE,
+          name TEXT NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+      `;
+      await postgresSql`
+        CREATE TABLE IF NOT EXISTS aureone_orders (
+          id TEXT PRIMARY KEY,
+          customer_id TEXT REFERENCES aureone_customers(id) ON DELETE CASCADE,
+          order_number TEXT NOT NULL UNIQUE,
+          status TEXT NOT NULL,
+          data JSONB NOT NULL,
+          created_at TIMESTAMPTZ NOT NULL
+        )
+      `;
+      await postgresSql`
+        ALTER TABLE aureone_orders ALTER COLUMN customer_id DROP NOT NULL
+      `;
+      await postgresSql`
+        CREATE TABLE IF NOT EXISTS aureone_order_sequence (
+          id INTEGER PRIMARY KEY CHECK (id = 1),
+          value INTEGER NOT NULL
+        )
+      `;
+      await postgresSql`
+        INSERT INTO aureone_order_sequence (id, value)
+        VALUES (1, 1000)
+        ON CONFLICT (id) DO NOTHING
+      `;
+    })();
+  }
+  try {
+    await postgresSchemaReady;
+  } catch (err) {
+    postgresSchemaReady = null;
+    throw err;
+  }
+}
+
+function requireAccountStorage(res) {
+  if (IS_VERCEL && !postgresSql) {
+    res.status(503).json({ error: 'Customer accounts and order tracking require a configured Vercel Postgres connection.' });
+    return false;
+  }
+  return true;
+}
+
+function reportStorageError(res, err) {
+  console.error('Customer/order storage request failed:', err);
+  if (!res.headersSent) res.status(503).json({ error: 'Account and order storage is temporarily unavailable. Please try again.' });
+}
+
+async function findCustomerByEmail(email) {
+  if (!postgresSql) return db.customers.find(account => account.email === email) || null;
+  await ensurePostgresSchema();
+  const rows = await postgresSql`
+    SELECT id, name, email, password_hash AS password, created_at AS "createdAt"
+    FROM aureone_customers WHERE email = ${email} LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
+async function findCustomerById(id) {
+  if (!postgresSql) return db.customers.find(account => account.id === id) || null;
+  await ensurePostgresSchema();
+  const rows = await postgresSql`
+    SELECT id, name, email, password_hash AS password, created_at AS "createdAt"
+    FROM aureone_customers WHERE id = ${id} LIMIT 1
+  `;
+  return rows[0] || null;
+}
+
+async function createCustomer(account) {
+  if (!postgresSql) {
+    db.customers.push(account);
+    save();
+    return account;
+  }
+  await ensurePostgresSchema();
+  const inserted = await postgresSql`
+    INSERT INTO aureone_customers (id, email, name, password_hash, created_at)
+    VALUES (${account.id}, ${account.email}, ${account.name}, ${account.password}, ${account.createdAt})
+    ON CONFLICT (email) DO NOTHING
+    RETURNING id
+  `;
+  return inserted.length ? account : findCustomerByEmail(account.email);
+}
+
+async function getCustomerOrders(customerId) {
+  if (!postgresSql) return db.orders.filter(order => order.customerId === customerId);
+  await ensurePostgresSchema();
+  const rows = await postgresSql`
+    SELECT data FROM aureone_orders
+    WHERE customer_id = ${customerId}
+    ORDER BY created_at DESC
+  `;
+  return rows.map(row => row.data);
+}
+
+async function getAllOrders() {
+  if (!postgresSql) return db.orders;
+  await ensurePostgresSchema();
+  const rows = await postgresSql`SELECT data FROM aureone_orders ORDER BY created_at DESC`;
+  return rows.map(row => row.data);
+}
+
+async function persistOrder(order) {
+  if (!postgresSql) {
+    db.orders.unshift(order);
+    save();
+    return order;
+  }
+  await ensurePostgresSchema();
+  const sequence = await postgresSql`
+    UPDATE aureone_order_sequence SET value = value + 1
+    WHERE id = 1 RETURNING value
+  `;
+  order.number = `AUR${sequence[0].value}`;
+  await postgresSql`
+    INSERT INTO aureone_orders (id, customer_id, order_number, status, data, created_at)
+    VALUES (
+      ${order.id}, ${order.customerId}, ${order.number}, ${order.status},
+      ${JSON.stringify(order)}::jsonb, ${order.createdAt}
+    )
+  `;
+  return order;
+}
+
+async function getOrderById(id) {
+  if (!postgresSql) return db.orders.find(order => order.id === id) || null;
+  await ensurePostgresSchema();
+  const rows = await postgresSql`SELECT data FROM aureone_orders WHERE id = ${id} LIMIT 1`;
+  return rows[0]?.data || null;
+}
+
+async function updatePersistentOrder(order) {
+  if (!postgresSql) {
+    save();
+    return;
+  }
+  await ensurePostgresSchema();
+  await postgresSql`
+    UPDATE aureone_orders
+    SET status = ${order.status}, data = ${JSON.stringify(order)}::jsonb
+    WHERE id = ${order.id}
+  `;
+}
+
+async function deletePersistentOrder(id) {
+  if (!postgresSql) {
+    db.orders = db.orders.filter(order => order.id !== id);
+    save();
+    return;
+  }
+  await ensurePostgresSchema();
+  await postgresSql`DELETE FROM aureone_orders WHERE id = ${id}`;
 }
 
 const uid = (prefix = '') => prefix + crypto.randomBytes(8).toString('hex');
@@ -249,6 +421,11 @@ const couponLimiter = createRateLimiter({
 });
 
 const loginAttempts = new Map(); // ip -> { count, until }
+const customerAuthLimiter = createRateLimiter({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many sign-in attempts. Please wait before trying again.'
+});
 
 /* ---------- upload hardening ---------- */
 const ALLOWED_MIME = {
@@ -449,7 +626,118 @@ app.post('/api/coupons/apply', couponLimiter, (req, res) => {
   res.json({ discount: result.discount, code: result.coupon.code, description: result.description });
 });
 
-app.post('/api/orders', orderLimiter, (req, res) => {
+async function customerFromRequest(req) {
+  const session = verifySessionToken(getCookie(req, 'aureone_customer'));
+  if (!session?.username.startsWith('customer-')) return null;
+  return findCustomerById(session.username.slice('customer-'.length));
+}
+
+function setCustomerSession(req, res, customer) {
+  const token = createSessionToken(`customer-${customer.id}`);
+  const flags = [
+    `aureone_customer=${encodeURIComponent(token)}`,
+    'HttpOnly',
+    'Path=/',
+    'SameSite=Lax',
+    `Max-Age=${SESSION_TTL / 1000}`
+  ];
+  if (req.secure || req.headers['x-forwarded-proto'] === 'https') flags.push('Secure');
+  res.setHeader('Set-Cookie', flags.join('; '));
+}
+
+function publicCustomer(customer) {
+  return { id: customer.id, name: customer.name, email: customer.email };
+}
+
+app.post('/api/account/checkout', customerAuthLimiter, async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  const name = clean(req.body?.name, 120);
+  const email = clean(req.body?.email, 160).toLowerCase();
+  const password = String(req.body?.password || '');
+  if (!name || !isEmail(email) || password.length < 8 || !/[a-zA-Z]/.test(password) || !/\d/.test(password)) {
+    return res.status(400).json({ error: 'Enter your name, a valid email, and a password with at least 8 characters, including a letter and a number.' });
+  }
+
+  try {
+    let customer = await findCustomerByEmail(email);
+    if (!customer) {
+      const account = { id: uid('cus_'), name, email, password: hashPassword(password), createdAt: new Date().toISOString() };
+      customer = await createCustomer(account);
+    }
+    if (!customer) throw new Error('Customer account could not be loaded after registration.');
+    if (!verifyPassword(password, customer.password)) {
+      return res.status(401).json({ error: 'An account already exists for this email. Enter its password to continue.' });
+    }
+
+    setCustomerSession(req, res, customer);
+    res.json({ customer: publicCustomer(customer) });
+  } catch (err) {
+    reportStorageError(res, err);
+  }
+});
+
+app.post('/api/account/login', customerAuthLimiter, async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  const email = clean(req.body?.email, 160).toLowerCase();
+  const password = String(req.body?.password || '');
+  try {
+    const customer = await findCustomerByEmail(email);
+    if (!customer || !verifyPassword(password, customer.password)) {
+      return res.status(401).json({ error: 'Email or password is incorrect.' });
+    }
+    setCustomerSession(req, res, customer);
+    res.json({ customer: publicCustomer(customer) });
+  } catch (err) {
+    reportStorageError(res, err);
+  }
+});
+
+app.post('/api/account/logout', (req, res) => {
+  const token = getCookie(req, 'aureone_customer');
+  if (token) sessions.delete(token);
+  const flags = ['aureone_customer=', 'HttpOnly', 'Path=/', 'SameSite=Lax', 'Max-Age=0'];
+  if (req.secure || req.headers['x-forwarded-proto'] === 'https') flags.push('Secure');
+  res.setHeader('Set-Cookie', flags.join('; '));
+  res.json({ ok: true });
+});
+
+app.get('/api/account/me', async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  try {
+    const customer = await customerFromRequest(req);
+    res.json({ customer: customer ? publicCustomer(customer) : null });
+  } catch (err) {
+    reportStorageError(res, err);
+  }
+});
+
+app.get('/api/account/orders', async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  try {
+    const customer = await customerFromRequest(req);
+    if (!customer) return res.status(401).json({ error: 'Sign in to view your orders.' });
+    const orders = await getCustomerOrders(customer.id);
+    res.json(orders.map(order => ({
+      number: order.number,
+      status: order.status,
+      createdAt: order.createdAt,
+      total: order.total,
+      payment: order.payment,
+      items: order.items.map(item => ({ name: item.name, size: item.size, price: item.price, qty: item.qty }))
+    })));
+  } catch (err) {
+    reportStorageError(res, err);
+  }
+});
+
+app.post('/api/orders', orderLimiter, async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  let account = null;
+  try {
+    account = await customerFromRequest(req);
+  } catch (err) {
+    return reportStorageError(res, err);
+  }
   const c = req.body.customer || {};
   const customer = {
     name: clean(c.name, 120),
@@ -463,6 +751,9 @@ app.post('/api/orders', orderLimiter, (req, res) => {
 
   if (!customer.name || !isEmail(customer.email) || !isPhone(customer.phone) || !customer.address || !customer.city || !customer.pincode) {
     return res.status(400).json({ error: 'Please provide valid delivery and contact details.' });
+  }
+  if (account && customer.email !== account.email) {
+    return res.status(400).json({ error: 'The delivery email must match the signed-in account.' });
   }
 
   const items = [];
@@ -519,6 +810,7 @@ app.post('/api/orders', orderLimiter, (req, res) => {
 
   const order = {
     id: uid(),
+    customerId: account?.id || null,
     number: 'AUR' + String(1001 + db.orders.length),
     customer,
     items,
@@ -532,9 +824,13 @@ app.post('/api/orders', orderLimiter, (req, res) => {
     status: 'pending',
     createdAt: new Date().toISOString()
   };
-  db.orders.unshift(order);
-  save();
-  res.status(201).json({ number: order.number, total: order.total });
+  try {
+    await persistOrder(order);
+    if (postgresSql && !IS_VERCEL) save();
+    res.status(201).json({ number: order.number, total: order.total });
+  } catch (err) {
+    reportStorageError(res, err);
+  }
 });
 
 app.post('/api/contact', contactLimiter, (req, res) => {
@@ -651,8 +947,15 @@ app.post('/api/admin/password', (req, res) => {
 });
 
 /* Dashboard statistics */
-app.get('/api/admin/stats', (req, res) => {
-  const live = db.orders.filter(o => o.status !== 'cancelled');
+app.get('/api/admin/stats', async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  let orders;
+  try {
+    orders = await getAllOrders();
+  } catch (err) {
+    return reportStorageError(res, err);
+  }
+  const live = orders.filter(o => o.status !== 'cancelled');
   const revenue = live.reduce((s, o) => s + o.total, 0);
   const days = [...Array(14)].map((_, i) => {
     const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (13 - i));
@@ -664,8 +967,8 @@ app.get('/api/admin/stats', (req, res) => {
   live.forEach(o => o.items.forEach(i => { sold[i.name] = (sold[i.name] || 0) + i.qty; }));
   res.json({
     revenue,
-    orders: db.orders.length,
-    pendingOrders: db.orders.filter(o => o.status === 'pending').length,
+    orders: orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
     products: db.products.length,
     lowStock: db.products.filter(p => p.stock <= 10).map(p => ({ id: p.id, name: p.name, stock: p.stock })),
     unreadMessages: db.messages.filter(m => !m.read).length,
@@ -673,7 +976,7 @@ app.get('/api/admin/stats', (req, res) => {
     activeCoupons: (db.coupons || []).filter(c => c.active).length,
     days,
     topProducts: Object.entries(sold).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, qty]) => ({ name, qty })),
-    recentOrders: db.orders.slice(0, 6)
+    recentOrders: orders.slice(0, 6)
   });
 });
 
@@ -756,10 +1059,23 @@ app.post('/api/admin/upload', upload.array('files', 6), (req, res) => {
 
 /* Admin Order Management */
 const STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'];
-app.get('/api/admin/orders', (req, res) => res.json(db.orders));
+app.get('/api/admin/orders', async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  try {
+    res.json(await getAllOrders());
+  } catch (err) {
+    reportStorageError(res, err);
+  }
+});
 
-app.patch('/api/admin/orders/:id', (req, res) => {
-  const o = db.orders.find(o => o.id === clean(req.params.id, 40));
+app.patch('/api/admin/orders/:id', async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  let o;
+  try {
+    o = await getOrderById(clean(req.params.id, 40));
+  } catch (err) {
+    return reportStorageError(res, err);
+  }
   if (!o) return res.status(404).json({ error: 'Order not found' });
   const status = clean(req.body.status, 20);
   if (!STATUSES.includes(status)) return res.status(400).json({ error: 'Invalid status' });
@@ -778,14 +1094,23 @@ app.patch('/api/admin/orders/:id', (req, res) => {
   }
   o.status = status;
   o.updatedAt = new Date().toISOString();
-  save();
-  res.json(o);
+  try {
+    await updatePersistentOrder(o);
+    if (postgresSql && !IS_VERCEL) save();
+    res.json(o);
+  } catch (err) {
+    reportStorageError(res, err);
+  }
 });
 
-app.delete('/api/admin/orders/:id', (req, res) => {
-  db.orders = db.orders.filter(o => o.id !== clean(req.params.id, 40));
-  save();
-  res.json({ ok: true });
+app.delete('/api/admin/orders/:id', async (req, res) => {
+  if (!requireAccountStorage(res)) return;
+  try {
+    await deletePersistentOrder(clean(req.params.id, 40));
+    res.json({ ok: true });
+  } catch (err) {
+    reportStorageError(res, err);
+  }
 });
 
 /* Admin Messages & Subscribers */

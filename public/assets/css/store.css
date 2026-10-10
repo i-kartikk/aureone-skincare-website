@@ -1547,6 +1547,95 @@ section { position: relative; }
   align-items: start;
   padding-bottom: 40px;
 }
+.account-gate {
+  display: grid;
+  place-items: center;
+  padding-bottom: 28px;
+}
+.account-gate .co-card {
+  width: min(540px, calc(100vw - 48px));
+}
+.account-gate .btn + .btn {
+  margin-top: 10px;
+}
+.account-page {
+  display: grid;
+  gap: 28px;
+  padding-bottom: 60px;
+}
+#accountOrders,
+.account-order-list,
+.account-welcome > div {
+  min-width: 0;
+}
+.account-login {
+  width: min(540px, 100%);
+  margin: 0 auto;
+}
+.account-login > a {
+  display: inline-block;
+  margin-top: 14px;
+}
+.account-welcome,
+.account-order {
+  border: 1px solid rgba(33, 29, 25, 0.08);
+  border-radius: 12px;
+  background: var(--white);
+  padding: clamp(20px, 3vw, 30px);
+}
+.account-welcome,
+.account-order-head,
+.account-order-total {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.account-welcome h2 {
+  margin: 4px 0;
+}
+.account-welcome p {
+  overflow-wrap: anywhere;
+}
+.account-order-list .success {
+  width: 100%;
+}
+.account-order-list {
+  display: grid;
+  gap: 14px;
+}
+.account-order-list > .section-head {
+  margin-bottom: 4px;
+}
+.account-order-items {
+  display: grid;
+  gap: 7px;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(33, 29, 25, 0.08);
+  color: var(--muted);
+  font-size: 14px;
+}
+.account-order-total {
+  padding-top: 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.account-order-total strong {
+  color: var(--ink);
+  font-size: 16px;
+}
+.account-status {
+  padding: 6px 12px;
+  border: 1px solid rgba(185, 154, 96, 0.28);
+  border-radius: 999px;
+  color: var(--gold-deep);
+  font-size: 11px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.account-status.shipped,
+.account-status.delivered { color: #39724b; }
+.account-status.cancelled { color: #a33f35; }
 .co-card {
   background: var(--white);
   border: 1px solid rgba(33, 29, 25, 0.08);
@@ -2425,23 +2514,12 @@ section { position: relative; }
 /* Product Card System (Blabliblu dw-pc) */
 .dw-pc-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 20px;
-}
-@media (max-width: 1200px) {
-  .dw-pc-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 @media (max-width: 800px) {
   .dw-pc-grid {
-    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
-  }
-}
-@media (max-width: 520px) {
-  .dw-pc-grid {
-    grid-template-columns: 1fr;
   }
 }
 .dw-pc {
@@ -2837,4 +2915,3 @@ section { position: relative; }
     font-weight: 700;
   }
 }
-

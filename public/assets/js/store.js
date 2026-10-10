@@ -6,6 +6,8 @@
   const app = $('#app');
 
   const state = { settings: null, products: [], reviews: [], offers: [], bag: loadBag(), coupon: null };
+  const duoProductIds = ['p6', 'p4'];
+  const suiteProductIds = ['p1', 'p6', 'p3', 'p4', 'p5'];
 
   const icon = {
     drop: '<path d="M12 3s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z"/>',
@@ -28,6 +30,20 @@
   const ring = name => `<span class="ring">${svg(name)}</span>`;
 
   const money = n => `${state.settings?.currency || '₹'}${Number(n || 0).toLocaleString('en-IN')}`;
+
+  function updateMilestonePrices() {
+    const strip = $('#milestoneStrip');
+    const solarVeil = state.products.find(product => product.id === 'p5');
+    const price = Number(solarVeil?.price);
+    if (!strip || !Number.isFinite(price) || price <= 0) return;
+
+    $$('[data-milestone-multiple]', strip).forEach(element => {
+      const multiple = Number(element.dataset.milestoneMultiple);
+      const threshold = Math.ceil(price * multiple / 100) * 100;
+      element.textContent = `${money(threshold)}+`;
+    });
+    strip.hidden = false;
+  }
 
   /* ---------- API ---------- */
   async function api(url, opts = {}) {
@@ -203,6 +219,16 @@
     home() {
       const s = state.settings || {};
       const prods = state.products || [];
+      const categoryOrder = ['Cleanse', 'Treat', 'Moisturize', 'Protect'];
+      const featuredProducts = prods.filter(product => product.featured).sort((a, b) => {
+        const categoryDifference = categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
+        return (categoryDifference || a.name.localeCompare(b.name));
+      });
+      const featuredNames = featuredProducts.slice(0, 3).map(product => esc(product.name)).join(', ');
+      const duoProducts = duoProductIds.map(id => prods.find(product => product.id === id)).filter(Boolean);
+      const suiteProducts = suiteProductIds.map(id => prods.find(product => product.id === id)).filter(Boolean);
+      const productTotal = products => products.reduce((total, product) => total + Number(product.price || 0), 0);
+      const compareTotal = products => products.reduce((total, product) => total + Number(product.comparePrice || product.price || 0), 0);
       return `
       <!-- SECTION 1: HERO EDITORIAL (Inspired by Blabliblu dw-hero) -->
       <section class="relative w-full overflow-hidden bg-[#F8F5EF] py-12 lg:py-20 border-b border-[#B99A60]/15" id="hero">
@@ -215,7 +241,7 @@
                 <span class="font-label-eyebrow text-[11px] uppercase text-[#B99A60] tracking-[0.25em] font-semibold">The Art of Radiance</span>
               </div>
               <h1 class="font-display-hero text-4xl sm:text-5xl lg:text-[54px] text-[#211D19] tracking-tight font-normal leading-[1.12]">
-                Rituals That Illuminate Every Skin — <span class="italic font-light text-[#B99A60]">Rice Veil, Radiance 5, Velvet Barrier</span>
+                Rituals That Illuminate Every Skin${featuredNames ? ` — <span class="italic font-light text-[#B99A60]">${featuredNames}</span>` : ''}
               </h1>
               <p class="font-body-lg text-[16px] sm:text-[18px] text-[#57524C] font-light leading-relaxed">
                 Pure Care, Real Results, Radiant You. Crafted at the nexus of clinical precision and botanical potency—formulated with fermented rice extract, barrier ceramides, and stabilized bio-vitamins.
@@ -227,7 +253,7 @@
                   <span class="text-[#B99A60]">★</span> 4.9/5 Rating (870+ Verified Reviews)
                 </span>
                 <span class="inline-flex items-center gap-1.5 bg-[#FFFFFF] border border-[#B99A60]/20 px-3 py-1 rounded-full text-[11px] text-[#211D19] font-medium shadow-sm">
-                  <span class="text-[#B99A60]">✓</span> 100% Dermatologically Tested
+                  <span class="text-[#B99A60]">✓</span> Thoughtfully Formulated
                 </span>
                 <span class="inline-flex items-center gap-1.5 bg-[#FFFFFF] border border-[#B99A60]/20 px-3 py-1 rounded-full text-[11px] text-[#211D19] font-medium shadow-sm">
                   <span class="text-[#B99A60]">✦</span> Bio-Fermented Actives
@@ -255,22 +281,22 @@
                 <div class="w-[1px] h-8 bg-[#B99A60]/25"></div>
                 <div>
                   <p class="font-display-hero text-2xl sm:text-3xl font-semibold text-[#211D19]">100%</p>
-                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Derm Evaluated</p>
+                  <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#8C857B]">Skin-First Care</p>
                 </div>
               </div>
             </div>
 
             <!-- Visual Hero Media -->
             <div class="lg:col-span-6 relative">
-              <div class="relative bg-[#FFFFFF] p-3 sm:p-4 rounded-2xl shadow-xl border border-[#B99A60]/20" id="hero3dScene">
+              <div class="relative overflow-hidden bg-[#FFFFFF] p-3 sm:p-4 rounded-2xl shadow-xl border border-[#B99A60]/20" id="hero3dScene">
                 <div class="relative w-full overflow-hidden rounded-xl" id="hero3dCard">
                   <img alt="Aureoné Complete Ritual Suite on Travertine" class="w-full h-auto max-h-[580px] object-cover rounded-xl" src="/assets/img/hero-ritual-bottles.jpg">
                   <div class="hero-3d-sheen" id="hero3dSheen"></div>
                 </div>
-                <div class="absolute -bottom-4 -left-3 sm:-left-6 flex flex-col bg-[#FFFFFF]/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-[#B99A60]/25 max-w-[280px] z-20">
+                <div class="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 flex flex-col bg-[#FFFFFF]/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-[#B99A60]/25 max-w-[280px] z-20">
                   <div class="flex items-center gap-1.5 text-[#B99A60] mb-1">
                     <span class="material-symbols-outlined text-[18px]">verified</span>
-                    <span class="font-label-eyebrow text-[10px] uppercase tracking-widest text-[#211D19] font-semibold">Maison Standard</span>
+                    <span class="font-label-eyebrow text-[10px] uppercase tracking-widest text-[#211D19] font-semibold">Aureoné Formulated</span>
                   </div>
                   <p class="font-body-sm text-[12px] text-[#57524C] leading-snug">
                     Zero parabens, sulfates, micro-plastics, or synthetic irritants.
@@ -296,59 +322,18 @@
           </div>
 
           <div class="dw-deck-grid">
-            <a href="#p-rice-veil" class="dw-deck-card">
-              <span class="dw-deck-step">Step 01</span>
+            ${featuredProducts.map((product, index) => {
+              const image = product.images?.[0] || '/assets/img/monogram.png';
+              return `
+            <a href="#home-product-${esc(product.id)}" class="dw-deck-card">
+              <span class="dw-deck-step">Step ${String(index + 1).padStart(2, '0')}</span>
               <div class="dw-deck-media">
-                <img src="/assets/img/card-rice-veil.jpg" alt="Rice Veil">
+                <img src="${esc(image)}" alt="${esc(product.name)}" loading="lazy">
               </div>
-              <span class="dw-deck-name">Rice Veil</span>
-              <span class="dw-deck-sub">Cleanse</span>
-            </a>
-
-            <a href="#p-radiance-5" class="dw-deck-card">
-              <span class="dw-deck-step">Step 02</span>
-              <div class="dw-deck-media">
-                <img src="/assets/img/card-radiance-5.jpg" alt="Radiance 5">
-              </div>
-              <span class="dw-deck-name">Radiance 5</span>
-              <span class="dw-deck-sub">Rebalance</span>
-            </a>
-
-            <a href="#p-bright-essence" class="dw-deck-card">
-              <span class="dw-deck-step">Step 03</span>
-              <div class="dw-deck-media">
-                <img src="/assets/img/card-bright-essence.jpg" alt="Bright Essence">
-              </div>
-              <span class="dw-deck-name">Bright Essence</span>
-              <span class="dw-deck-sub">Illuminate</span>
-            </a>
-
-            <a href="#p-velvet-barrier" class="dw-deck-card">
-              <span class="dw-deck-step">Step 04</span>
-              <div class="dw-deck-media">
-                <img src="/assets/img/card-velvet-barrier.jpg" alt="Velvet Barrier">
-              </div>
-              <span class="dw-deck-name">Velvet Barrier</span>
-              <span class="dw-deck-sub">Fortify</span>
-            </a>
-
-            <a href="#p-solar-veil" class="dw-deck-card">
-              <span class="dw-deck-step">Step 05</span>
-              <div class="dw-deck-media">
-                <img src="/assets/img/card-solar-veil.jpg" alt="Solar Veil">
-              </div>
-              <span class="dw-deck-name">Solar Veil</span>
-              <span class="dw-deck-sub">Defend</span>
-            </a>
-
-            <a href="#master-duo" class="dw-deck-card">
-              <span class="dw-deck-step" style="color:var(--dw-ink)">Curated</span>
-              <div class="dw-deck-media">
-                <img src="/assets/img/hero-ritual-bottles.jpg" alt="Master Sets">
-              </div>
-              <span class="dw-deck-name">Master Duos</span>
-              <span class="dw-deck-sub">Ceremonies</span>
-            </a>
+              <span class="dw-deck-name">${esc(product.name)}</span>
+              <span class="dw-deck-sub">${esc(product.category || product.subtitle || '')}</span>
+            </a>`;
+            }).join('')}
           </div>
         </div>
       </section>
@@ -376,150 +361,37 @@
 
           <!-- The 5 Blabliblu-styled Product Cards Grid -->
           <div class="dw-pc-grid">
-            <!-- Step 01: Rice Veil -->
-            <article class="dw-pc" id="p-rice-veil">
-              <span class="new-budge">BESTSELLER</span>
-              <a href="/product/rice-veil" data-link class="dw-pc__img">
-                <img src="/assets/img/card-rice-veil.jpg" alt="Rice Veil Gentle Daily Face Wash" loading="lazy">
+            ${featuredProducts.map((product, index) => {
+              const href = `/product/${encodeURIComponent(product.slug || product.id)}`;
+              const image = product.images?.[0] || '/assets/img/monogram.png';
+              const comparePrice = Number(product.comparePrice) || 0;
+              const discount = comparePrice > product.price
+                ? Math.round((1 - product.price / comparePrice) * 100)
+                : 0;
+              return `
+            <article class="dw-pc" id="home-product-${esc(product.id)}">
+              <span class="new-budge">STEP ${String(index + 1).padStart(2, '0')}</span>
+              <a href="${esc(href)}" data-link class="dw-pc__img">
+                <img src="${esc(image)}" alt="${esc(`${product.name} ${product.subtitle || ''}`.trim())}" loading="lazy">
               </a>
               <div class="dw-pc__info">
-                <span class="dw-pc__cat">Step 01 • Cleanse</span>
+                <span class="dw-pc__cat">${esc(product.category || 'Skincare')}</span>
                 <div class="dw-pc__t">
-                  <h3><a href="/product/rice-veil" data-link>Rice Veil Face Wash - 100 ML</a></h3>
-                  <div class="dw-pc__notes">Fermented Rice | Panthenol | Glycerin</div>
+                  <h3><a href="${esc(href)}" data-link>${esc(product.name)}${product.size ? ` - ${esc(product.size)}` : ''}</a></h3>
+                  <div class="dw-pc__notes">${esc(product.subtitle || '')}</div>
                 </div>
                 <div class="dw-pc__price">
-                  <b>₹649</b>
-                  <s>₹799</s>
-                  <span class="dw-discount">19% OFF</span>
+                  <b>${money(product.price)}</b>
+                  ${comparePrice > product.price ? `<s>${money(comparePrice)}</s><span class="dw-discount">${discount}% OFF</span>` : ''}
                 </div>
-                <div class="dw-pc__chips">
-                  <span>pH 5.5 Balanced</span>
-                  <span>All Skin Types</span>
-                  <span>Zero Tightness</span>
-                </div>
+                ${product.benefits?.length ? `<div class="dw-pc__chips">${product.benefits.slice(0, 3).map(benefit => `<span>${esc(benefit)}</span>`).join('')}</div>` : ''}
               </div>
-              <button class="dw-add" data-dw-add="p1" type="button" aria-label="Add Rice Veil to bag">
+              <button class="dw-add" data-dw-add="${esc(product.id)}" type="button" aria-label="Add ${esc(product.name)} to bag">
                 <span class="lbl">Add to bag</span>
                 <span class="ok" aria-hidden="true">Added ✓</span>
               </button>
-            </article>
-
-            <!-- Step 02: Radiance 5 -->
-            <article class="dw-pc" id="p-radiance-5">
-              <span class="new-budge gold">TOP RATED</span>
-              <a href="/product/radiance-5" data-link class="dw-pc__img">
-                <img src="/assets/img/card-radiance-5.jpg" alt="Radiance 5 Niacinamide Serum" loading="lazy">
-              </a>
-              <div class="dw-pc__info">
-                <span class="dw-pc__cat">Step 02 • Rebalance</span>
-                <div class="dw-pc__t">
-                  <h3><a href="/product/radiance-5" data-link>Radiance 5 Serum - 30 ML</a></h3>
-                  <div class="dw-pc__notes">Niacinamide 5% | Fermented Rice | Alpha Arbutin</div>
-                </div>
-                <div class="dw-pc__price">
-                  <b>₹849</b>
-                  <s>₹1,099</s>
-                  <span class="dw-discount">23% OFF</span>
-                </div>
-                <div class="dw-pc__chips">
-                  <span>Pore Refining</span>
-                  <span>Tone Corrector</span>
-                  <span>Oil Control</span>
-                </div>
-              </div>
-              <button class="dw-add" data-dw-add="p6" type="button" aria-label="Add Radiance 5 to bag">
-                <span class="lbl">Add to bag</span>
-                <span class="ok" aria-hidden="true">Added ✓</span>
-              </button>
-            </article>
-
-            <!-- Step 03: Bright Essence -->
-            <article class="dw-pc" id="p-bright-essence">
-              <span class="new-budge">CLINICAL PICK</span>
-              <a href="/product/bright-essence" data-link class="dw-pc__img">
-                <img src="/assets/img/card-bright-essence.jpg" alt="Bright Essence Radiance Elixir" loading="lazy">
-              </a>
-              <div class="dw-pc__info">
-                <span class="dw-pc__cat">Step 03 • Illuminate</span>
-                <div class="dw-pc__t">
-                  <h3><a href="/product/bright-essence" data-link>Bright Essence - 30 ML</a></h3>
-                  <div class="dw-pc__notes">Vitamin C (3-O Ethyl) | Ferulic Acid | HA</div>
-                </div>
-                <div class="dw-pc__price">
-                  <b>₹1,099</b>
-                  <s>₹1,299</s>
-                  <span class="dw-discount">15% OFF</span>
-                </div>
-                <div class="dw-pc__chips">
-                  <span>Photoprotect</span>
-                  <span>Antioxidant</span>
-                  <span>Instant Glow</span>
-                </div>
-              </div>
-              <button class="dw-add" data-dw-add="p3" type="button" aria-label="Add Bright Essence to bag">
-                <span class="lbl">Add to bag</span>
-                <span class="ok" aria-hidden="true">Added ✓</span>
-              </button>
-            </article>
-
-            <!-- Step 04: Velvet Barrier -->
-            <article class="dw-pc" id="p-velvet-barrier">
-              <span class="new-budge gold">BARRIER REPAIR</span>
-              <a href="/product/velvet-barrier" data-link class="dw-pc__img">
-                <img src="/assets/img/card-velvet-barrier.jpg" alt="Velvet Barrier Repair Cream" loading="lazy">
-              </a>
-              <div class="dw-pc__info">
-                <span class="dw-pc__cat">Step 04 • Fortify</span>
-                <div class="dw-pc__t">
-                  <h3><a href="/product/velvet-barrier" data-link>Velvet Barrier Cream - 50 GM</a></h3>
-                  <div class="dw-pc__notes">Ceramide NP | Plant Squalane | Hyaluronic Matrix</div>
-                </div>
-                <div class="dw-pc__price">
-                  <b>₹999</b>
-                  <s>₹1,199</s>
-                  <span class="dw-discount">17% OFF</span>
-                </div>
-                <div class="dw-pc__chips">
-                  <span>Lipid Lock</span>
-                  <span>Deep Recovery</span>
-                  <span>Velvet Cushion</span>
-                </div>
-              </div>
-              <button class="dw-add" data-dw-add="p4" type="button" aria-label="Add Velvet Barrier to bag">
-                <span class="lbl">Add to bag</span>
-                <span class="ok" aria-hidden="true">Added ✓</span>
-              </button>
-            </article>
-
-            <!-- Step 05: Solar Veil -->
-            <article class="dw-pc" id="p-solar-veil">
-              <span class="new-budge">NEW LAUNCH</span>
-              <a href="/product/solar-veil" data-link class="dw-pc__img">
-                <img src="/assets/img/card-solar-veil.jpg" alt="Solar Veil Daily Sunscreen SPF 50" loading="lazy">
-              </a>
-              <div class="dw-pc__info">
-                <span class="dw-pc__cat">Step 05 • Defend</span>
-                <div class="dw-pc__t">
-                  <h3><a href="/product/solar-veil" data-link>Solar Veil SPF 50 - 50 ML</a></h3>
-                  <div class="dw-pc__notes">Ceramides | Squalane | Vitamin E | UVA/UVB</div>
-                </div>
-                <div class="dw-pc__price">
-                  <b>₹799</b>
-                  <s>₹999</s>
-                  <span class="dw-discount">20% OFF</span>
-                </div>
-                <div class="dw-pc__chips">
-                  <span>Zero White Cast</span>
-                  <span>Non-Comedogenic</span>
-                  <span>Dewy Finish</span>
-                </div>
-              </div>
-              <button class="dw-add" data-dw-add="p5" type="button" aria-label="Add Solar Veil to bag">
-                <span class="lbl">Add to bag</span>
-                <span class="ok" aria-hidden="true">Added ✓</span>
-              </button>
-            </article>
+            </article>`;
+            }).join('')}
           </div>
         </div>
       </section>
@@ -542,25 +414,8 @@
           </div>
 
           <div class="bg-[#FFFFFF] border border-[#B99A60]/25 rounded-3xl p-6 sm:p-10 shadow-sm relative">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-[#B99A60]/15">
-              <div class="flex items-center gap-3">
-                <span class="flex h-3 w-3 relative">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B99A60] opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-[#B99A60]"></span>
-                </span>
-                <span class="font-label-button text-[12px] uppercase text-[#211D19] tracking-wider font-semibold">
-                  Interactive 3D Flacon — Move Cursor to Inspect Cellular Architecture
-                </span>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="font-label-caption text-[11px] text-[#57524C] uppercase tracking-wider bg-[#FAF8F3] px-3.5 py-1.5 rounded-full border border-[#B99A60]/20">
-                  Three.js Realtime Renderer • 60 FPS
-                </span>
-              </div>
-            </div>
-
             <!-- 3D Product Showcase -->
-            <div class="w-full my-4">
+            <div class="w-full">
               <iframe
                 src="/ritual-3d.html"
                 title="Aureoné product showcase"
@@ -606,34 +461,29 @@
               Cellular Equilibrium in Two Steps
             </h2>
             <p class="font-body-md text-[#57524C] mt-2">
-              When paired together, Radiance 5 and Velvet Barrier form a continuous lipid-water reservoir that visibly transforms texture and luminosity within 14 days.
+              ${duoProducts.length === duoProductIds.length
+                ? `A complementary pairing featuring ${duoProducts.map(product => esc(product.name)).join(' and ')}.`
+                : 'This product pairing is currently unavailable.'}
             </p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             <!-- Visual Gallery Pair -->
             <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-6">
+              ${duoProducts.map((product, index) => {
+                const image = product.images?.[0] || '/assets/img/monogram.png';
+                return `
               <div class="bg-[#FFFFFF] p-5 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
                 <div class="w-full h-[320px] bg-[#FAF8F3] rounded-xl p-3 flex items-center justify-center overflow-hidden border border-[#B99A60]/10">
-                  <img alt="Radiance 5 Niacinamide Serum" class="w-full h-full object-contain" src="/assets/img/card-radiance-5.jpg">
+                  <img alt="${esc(product.name)}" class="w-full h-full object-contain" src="${esc(image)}" loading="lazy">
                 </div>
                 <div class="pt-4 text-center">
-                  <p class="font-display-hero text-[18px] text-[#211D19]">Radiance 5</p>
-                  <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider">Step 02 • Brightening Serum</p>
-                  <p class="font-body-sm text-[15px] text-[#211D19] font-medium mt-1">₹849</p>
+                  <p class="font-display-hero text-[18px] text-[#211D19]">${esc(product.name)}</p>
+                  <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider">${esc(product.category || product.subtitle || '')}</p>
+                  <p class="font-body-sm text-[15px] text-[#211D19] font-medium mt-1">${money(product.price)}</p>
                 </div>
-              </div>
-
-              <div class="bg-[#FFFFFF] p-5 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
-                <div class="w-full h-[320px] bg-[#FAF8F3] rounded-xl p-3 flex items-center justify-center overflow-hidden border border-[#B99A60]/10">
-                  <img alt="Velvet Barrier Repair Cream" class="w-full h-full object-contain" src="/assets/img/card-velvet-barrier.jpg">
-                </div>
-                <div class="pt-4 text-center">
-                  <p class="font-display-hero text-[18px] text-[#211D19]">Velvet Barrier</p>
-                  <p class="font-label-caption text-[11px] text-[#B99A60] uppercase tracking-wider">Step 04 • Barrier Repair</p>
-                  <p class="font-body-sm text-[15px] text-[#211D19] font-medium mt-1">₹999</p>
-                </div>
-              </div>
+              </div>`;
+              }).join('')}
             </div>
 
             <!-- Clinical Efficacy & Bundle Card -->
@@ -660,19 +510,21 @@
               <div class="bg-[#FAF8F3] p-6 rounded-2xl border border-[#B99A60]/25">
                 <div class="flex items-center justify-between mb-2">
                   <span class="font-label-eyebrow text-[10px] uppercase text-[#B99A60] tracking-widest font-semibold">Special Harmonized Pairing</span>
-                  <span class="font-label-caption text-[11px] text-[#FFFFFF] bg-[#B99A60] px-2.5 py-0.5 rounded font-medium">Save ₹250</span>
                 </div>
                 <h3 class="font-display-hero text-[22px] text-[#211D19]">The Equilibrium Master Duo</h3>
                 <p class="font-body-sm text-[13px] text-[#57524C] mt-1 leading-relaxed">
-                  Includes Radiance 5 Niacinamide Serum (30ml) + Velvet Barrier Repair Moisturizer (50ml). The essential morning and evening synergy.
+                  ${duoProducts.length === duoProductIds.length
+                    ? `Includes ${duoProducts.map(product => esc(product.name)).join(' + ')}. The essential morning and evening synergy.`
+                    : 'This pairing is currently unavailable.'}
                 </p>
                 <div class="mt-4 flex items-center justify-between">
                   <div class="flex items-baseline gap-2.5">
-                    <span class="font-display-hero text-[24px] text-[#211D19] font-medium">₹1,598</span>
-                    <span class="font-body-md text-[15px] text-[#8C857B] line-through">₹1,848</span>
+                    ${duoProducts.length === duoProductIds.length ? `
+                    <span class="font-display-hero text-[24px] text-[#211D19] font-medium">${money(productTotal(duoProducts))}</span>
+                    ${compareTotal(duoProducts) > productTotal(duoProducts) ? `<span class="font-body-md text-[15px] text-[#8C857B] line-through">${money(compareTotal(duoProducts))}</span>` : ''}` : ''}
                   </div>
-                  <button data-add-bundle="duo" class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-6 py-3 rounded font-label-button text-[11px] uppercase tracking-wider transition-colors shadow-sm">
-                    Acquire Duo
+                  <button data-add-bundle="duo" ${duoProducts.length !== duoProductIds.length ? 'disabled' : ''} class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-6 py-3 rounded font-label-button text-[11px] uppercase tracking-wider transition-colors shadow-sm">
+                    ${duoProducts.length === duoProductIds.length ? 'Acquire Duo' : 'Unavailable'}
                   </button>
                 </div>
               </div>
@@ -716,7 +568,7 @@
                     The Master Set • Complete Ritual
                   </div>
                   <div class="absolute bottom-4 right-4 bg-[#B99A60] text-[#FFFFFF] px-3.5 py-1.5 rounded font-label-button text-[11px] uppercase tracking-wider font-semibold">
-                    Save ₹800 (18% Off)
+                    ${suiteProducts.length === suiteProductIds.length ? `${suiteProducts.length}-Product Collection` : 'Collection unavailable'}
                   </div>
                 </div>
               </div>
@@ -745,41 +597,27 @@
 
                 <!-- Inclusions Checklist -->
                 <div class="space-y-2 py-2 border-y border-[#B99A60]/15">
-                  <div class="flex items-center gap-2.5 text-[#211D19]">
-                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
-                    <span class="font-body-sm text-[13px] font-medium">01. Rice Veil Daily Gentle Wash (100ml)</span>
-                  </div>
-                  <div class="flex items-center gap-2.5 text-[#211D19]">
-                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
-                    <span class="font-body-sm text-[13px] font-medium">02. Radiance 5 Niacinamide Serum (30ml)</span>
-                  </div>
-                  <div class="flex items-center gap-2.5 text-[#211D19]">
-                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
-                    <span class="font-body-sm text-[13px] font-medium">03. Bright Essence Radiance Elixir (30ml)</span>
-                  </div>
-                  <div class="flex items-center gap-2.5 text-[#211D19]">
-                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
-                    <span class="font-body-sm text-[13px] font-medium">04. Velvet Barrier Repair Moisturizer (50ml)</span>
-                  </div>
-                  <div class="flex items-center gap-2.5 text-[#211D19]">
-                    <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
-                    <span class="font-body-sm text-[13px] font-medium">05. Solar Veil Daily Sunscreen SPF 50 (50ml)</span>
-                  </div>
+                ${suiteProducts.map((product, index) => `
+                <div class="flex items-center gap-2.5 text-[#211D19]">
+                  <span class="material-symbols-outlined text-[#B99A60] text-[18px]">check_circle</span>
+                  <span class="font-body-sm text-[13px] font-medium">${String(index + 1).padStart(2, '0')}. ${esc(product.name)}${product.size ? ` (${esc(product.size)})` : ''}</span>
+                </div>`).join('')}
                   <div class="flex items-center gap-2.5 text-[#B99A60] pt-1 font-medium">
                     <span class="material-symbols-outlined text-[18px]">card_giftcard</span>
                     <span class="font-body-sm text-[13px]">Complimentary Gold Spatula & Organic Linen Travel Pouch</span>
                   </div>
                 </div>
 
-                <!-- Price & CTA in INR -->
+                <!-- Catalog total and CTA -->
                 <div class="pt-2">
                   <div class="flex items-baseline gap-3 mb-4">
-                    <span class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal">₹3,595</span>
-                    <span class="font-display-hero text-2xl text-[#8C857B] line-through">₹4,395</span>
-                    <span class="font-label-caption text-[11px] text-[#B99A60] uppercase font-semibold">Free Express Courier India</span>
+                    ${suiteProducts.length === suiteProductIds.length ? `
+                    <span class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal">${money(productTotal(suiteProducts))}</span>
+                    ${compareTotal(suiteProducts) > productTotal(suiteProducts) ? `<span class="font-display-hero text-2xl text-[#8C857B] line-through">${money(compareTotal(suiteProducts))}</span>` : ''}
+                    <span class="font-label-caption text-[11px] text-[#B99A60] uppercase font-semibold">Catalog total</span>` : '<span>This collection is currently unavailable.</span>'}
                   </div>
                   <div class="flex flex-col sm:flex-row gap-3">
-                    <button data-add-bundle="suite" class="flex-1 bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <button data-add-bundle="suite" ${suiteProducts.length !== suiteProductIds.length ? 'disabled' : ''} class="flex-1 bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm">
                       <span class="material-symbols-outlined text-[18px]">lock</span>
                       <span>Acquire Complete Suite</span>
                     </button>
@@ -1319,7 +1157,24 @@
         <div class="eyebrow">Checkout</div>
         <h1 class="display">Almost <em class="gold-text">radiant</em></h1>
       </div></section>
-      <section class="wrap checkout">
+      <section class="wrap account-gate" id="checkoutAccountGate">
+        <form class="co-card glass" id="checkoutAccountForm">
+          <div class="eyebrow">Your Aureoné account</div>
+          <h2 class="display">Order your way</h2>
+          <p class="muted">Sign in or create an account to see your order history and status. You can also place an order as a guest.</p>
+          <div class="form-grid">
+            <label class="field full" id="accountNameField" hidden><span>Full name</span><input class="input" name="name" autocomplete="name"></label>
+            <label class="field full"><span>Email</span><input class="input" type="email" name="email" autocomplete="email" required></label>
+            <label class="field full"><span>Password</span><input class="input" type="password" name="password" autocomplete="current-password" minlength="8" required></label>
+          </div>
+          <p class="coupon-msg" id="checkoutAccountMsg" role="alert"></p>
+          <button class="btn btn-gold btn-block" type="submit" id="accountContinueBtn">Sign in and continue</button>
+          <button class="btn btn-glass btn-block" type="button" id="accountModeToggle">New here? Create an account</button>
+          <button class="btn btn-ghost btn-block" type="button" id="continueAsGuest">Continue as guest</button>
+          <p class="muted small" style="text-align:center;margin:12px 0 0">Guest orders can be tracked through their confirmation details. Create an account to keep order history in one place.</p>
+        </form>
+      </section>
+      <section class="wrap checkout" id="checkoutContent" hidden>
         <form class="co-card glass" id="checkoutForm">
           <div class="eyebrow">Delivery</div>
           <h2 class="display">Where shall we send it?</h2>
@@ -1430,8 +1285,32 @@
         <h1 class="display">Your ritual is on its way</h1>
         <p>Order <b>${esc(number)}</b> has been placed. We’ll be in touch shortly to confirm delivery.</p>
         <p class="script" style="font-size:40px;margin:14px 0">One Ritual at a Time</p>
+        <a href="/account" data-link class="btn btn-glass" style="margin:0 8px 12px">View your orders</a>
         <a href="/shop" data-link class="btn btn-gold">Continue shopping</a>
       </div></div>`;
+    },
+
+    account() {
+      return `
+      <section class="page-hero"><div class="wrap reveal">
+        <div class="eyebrow">Aureoné account</div>
+        <h1 class="display">Your <em class="gold-text">orders</em></h1>
+        <p>Sign in to follow your rituals from confirmation to delivery.</p>
+      </div></section>
+      <section class="wrap account-page" id="accountPage">
+        <form class="co-card glass account-login" id="accountLoginForm">
+          <div class="eyebrow">Welcome back</div>
+          <h2 class="display">Sign in to your account</h2>
+          <div class="form-grid">
+            <label class="field full"><span>Email</span><input class="input" type="email" name="email" autocomplete="email" required></label>
+            <label class="field full"><span>Password</span><input class="input" type="password" name="password" autocomplete="current-password" required></label>
+          </div>
+          <p class="coupon-msg" id="accountLoginMsg" role="alert"></p>
+          <button class="btn btn-gold btn-block" type="submit">Sign in</button>
+          <a href="/checkout" data-link class="muted small">New customer? Create an account during checkout.</a>
+        </form>
+        <div id="accountOrders"></div>
+      </section>`;
     }
   };
 
@@ -1551,8 +1430,62 @@
   function mountCheckout() {
     const f = $('#checkoutForm');
     if (!f) return;
+    const gate = $('#checkoutAccountGate');
+    const content = $('#checkoutContent');
+    const accountForm = $('#checkoutAccountForm');
+    const accountNameField = $('#accountNameField');
+    const accountName = $('input[name="name"]', accountForm);
+    const accountEmail = $('input[name="email"]', accountForm);
+    const accountPassword = $('input[name="password"]', accountForm);
+    const continueBtn = $('#accountContinueBtn');
+    let createAccount = false;
     let discount = 0;
     let couponCode = '';
+
+    const revealCheckout = customer => {
+      gate.hidden = true;
+      content.hidden = false;
+      if (customer) {
+        f.elements.name.value = customer.name;
+        f.elements.email.value = customer.email;
+        f.elements.email.readOnly = true;
+      } else {
+        f.elements.email.readOnly = false;
+      }
+      accountPassword.value = '';
+    };
+
+    api('/api/account/me').then(({ customer }) => {
+      if (customer) revealCheckout(customer);
+    }).catch(err => toast(err.message, true));
+
+    $('#accountModeToggle').addEventListener('click', () => {
+      createAccount = !createAccount;
+      accountNameField.hidden = !createAccount;
+      accountName.required = createAccount;
+      accountPassword.autocomplete = createAccount ? 'new-password' : 'current-password';
+      $('#checkoutAccountForm h2').textContent = createAccount ? 'Create your account' : 'Sign in to continue';
+      continueBtn.textContent = createAccount ? 'Create account and continue' : 'Sign in and continue';
+      $('#accountModeToggle').textContent = createAccount ? 'Already have an account? Sign in' : 'New here? Create an account';
+      $('#checkoutAccountMsg').textContent = '';
+    });
+
+    accountForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      continueBtn.disabled = true;
+      $('#checkoutAccountMsg').textContent = '';
+      try {
+        const endpoint = createAccount ? '/api/account/checkout' : '/api/account/login';
+        const data = Object.fromEntries(new FormData(accountForm));
+        const { customer } = await api(endpoint, { method: 'POST', body: JSON.stringify(data) });
+        revealCheckout(customer);
+      } catch (err) {
+        $('#checkoutAccountMsg').textContent = err.message;
+      } finally {
+        continueBtn.disabled = false;
+      }
+    });
+    $('#continueAsGuest').addEventListener('click', () => revealCheckout(null));
 
     // Open bag drawer directly from summary
     $('#coEditBag')?.addEventListener('click', () => openDrawer(true));
@@ -1639,6 +1572,65 @@
         navigate(`/order/${res.number}`);
       } catch (err) { toast(err.message, true); btn.disabled = false; }
     });
+  }
+
+  function mountAccount() {
+    const root = $('#accountPage');
+    if (!root) return;
+    const loginForm = $('#accountLoginForm');
+    const ordersRoot = $('#accountOrders');
+    const showOrders = async customer => {
+      const orders = await api('/api/account/orders');
+      loginForm.hidden = true;
+      ordersRoot.innerHTML = `
+        <div class="account-welcome glass">
+          <div><div class="eyebrow">Signed in as</div><h2 class="display">${esc(customer.name)}</h2><p class="muted">${esc(customer.email)}</p></div>
+          <button class="btn btn-glass" type="button" id="accountLogout">Sign out</button>
+        </div>
+        <div class="account-order-list">
+          <div class="section-head"><div class="eyebrow">Your order history</div><h2 class="display">Order status</h2></div>
+          ${orders.length ? orders.map(order => `
+            <article class="account-order glass">
+              <div class="account-order-head">
+                <div><span class="eyebrow">Order ${esc(order.number)}</span><p class="muted small">${new Date(order.createdAt).toLocaleDateString()}</p></div>
+                <span class="account-status ${esc(order.status)}">${esc(order.status)}</span>
+              </div>
+              <div class="account-order-items">${order.items.map(item => `<span>${esc(item.name)}${item.size ? ` · ${esc(item.size)}` : ''} × ${Number(item.qty)}</span>`).join('')}</div>
+              <div class="account-order-total"><span>${esc(order.payment || 'Cash on Delivery')}</span><strong>${money(order.total)}</strong></div>
+            </article>`).join('') : '<div class="success glass"><h3 class="display">No orders yet</h3><p class="muted">Your orders will appear here after checkout.</p><a href="/shop" data-link class="btn btn-gold">Explore the collection</a></div>'}
+        </div>`;
+      $('#accountLogout').addEventListener('click', async () => {
+        try {
+          await api('/api/account/logout', { method: 'POST' });
+          loginForm.hidden = false;
+          ordersRoot.innerHTML = '';
+        } catch (err) { toast(err.message, true); }
+      });
+    };
+
+    const loadAccount = async () => {
+      try {
+        const { customer } = await api('/api/account/me');
+        if (customer) await showOrders(customer);
+      } catch (err) { toast(err.message, true); }
+    };
+
+    loginForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = $('button[type="submit"]', loginForm);
+      btn.disabled = true;
+      $('#accountLoginMsg').textContent = '';
+      try {
+        const data = Object.fromEntries(new FormData(loginForm));
+        const { customer } = await api('/api/account/login', { method: 'POST', body: JSON.stringify(data) });
+        await showOrders(customer);
+      } catch (err) {
+        $('#accountLoginMsg').textContent = err.message;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+    loadAccount();
   }
 
   /* ---------- hero 3d animation ---------- */
@@ -1921,7 +1913,8 @@
     [/^\/offers\/?$/, () => pages.offers(), mountOffers],
     [/^\/contact\/?$/, () => pages.contact(), mountContact],
     [/^\/checkout\/?$/, () => pages.checkout(), mountCheckout],
-    [/^\/order\/([^/]+)\/?$/, m => pages.order(decodeURIComponent(m[1]))]
+    [/^\/order\/([^/]+)\/?$/, m => pages.order(decodeURIComponent(m[1]))],
+    [/^\/account\/?$/, () => pages.account(), mountAccount]
   ];
 
   function render() {
@@ -2033,14 +2026,14 @@
     if (bundle) {
       e.preventDefault();
       const bType = bundle.dataset.addBundle;
-      if (bType === 'duo') {
-        addToBag('p6', 1, '30 ml');
-        addToBag('p4', 1, '50 ml');
-        toast('Equilibrium Duo added to bag ✦');
-      } else if (bType === 'suite') {
-        ['p1', 'p6', 'p3', 'p4', 'p5'].forEach(id => addToBag(id, 1));
-        toast('Complete 5-Step Ritual Suite added to bag ✦');
+      const productIds = bType === 'duo' ? duoProductIds : bType === 'suite' ? suiteProductIds : null;
+      if (!productIds) return;
+      if (!productIds.every(id => state.products.some(product => product.id === id))) {
+        toast('This collection is currently unavailable.', true);
+        return;
       }
+      productIds.forEach(id => addToBag(id));
+      toast(bType === 'duo' ? 'Equilibrium Duo added to bag ✦' : 'Complete 5-Step Ritual Suite added to bag ✦');
       return openDrawer();
     }
     const inc = e.target.closest('[data-inc]'), dec = e.target.closest('[data-dec]'), rm = e.target.closest('[data-rm]');
@@ -2086,6 +2079,7 @@
       return;
     }
     const s = state.settings;
+    updateMilestonePrices();
     $('#announce').textContent = s.announcement || '';
     $('#brandWord').textContent = s.brandName;
     if ($('#brandTagline')) $('#brandTagline').textContent = s.tagline;

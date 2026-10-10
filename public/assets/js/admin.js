@@ -62,6 +62,15 @@
   });
   $('#logout').addEventListener('click', async () => { await api('/api/admin/logout', { method: 'POST' }).catch(() => { }); showLogin(); });
   $('#sideToggle').addEventListener('click', () => $('#side').classList.toggle('open'));
+  $('#sideNav').addEventListener('click', e => {
+    if (e.target.closest('a')) $('#side').classList.remove('open');
+  });
+  document.addEventListener('click', e => {
+    const side = $('#side');
+    if (side.classList.contains('open') && !side.contains(e.target) && !$('#sideToggle').contains(e.target)) {
+      side.classList.remove('open');
+    }
+  });
 
   /* ---------- router ---------- */
   let badges = {};
