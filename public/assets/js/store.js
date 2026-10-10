@@ -559,9 +559,14 @@
               </div>
             </div>
 
-            <!-- 3D Scene Container -->
-            <div class="w-full relative min-h-[480px] h-[480px] flex items-center justify-center my-4 overflow-hidden rounded-2xl bg-[#FAF8F3]/60">
-              <div id="threejs-container-ANIMATION_23" class="w-full h-full bg-transparent block relative z-10" style="width:100%;height:100%"></div>
+            <!-- 3D Product Showcase -->
+            <div class="w-full my-4">
+              <iframe
+                src="/ritual-3d.html"
+                title="Aureoné product showcase"
+                loading="lazy"
+                style="width:100%;max-width:900px;aspect-ratio:1/1;border:0;display:block;margin:0 auto;">
+              </iframe>
             </div>
 
             <!-- 3D Metrics Feature Grid -->
@@ -1904,7 +1909,6 @@
 
   function mountHome() {
     initHero3d();
-    initThreeJsScene();
   }
 
   /* ---------- router ---------- */
