@@ -52,10 +52,11 @@
   function showLogin() { $('#shell').hidden = true; $('#login').hidden = false; $('#modal').hidden = true; }
   $('#loginForm').addEventListener('submit', async e => {
     e.preventDefault();
+    const form = e.currentTarget; // Save before await; currentTarget is cleared after the event callback yields.
     $('#loginErr').textContent = '';
     try {
-      await send('/api/admin/login', 'POST', Object.fromEntries(new FormData(e.currentTarget)));
-      e.currentTarget.reset();
+      await send('/api/admin/login', 'POST', Object.fromEntries(new FormData(form)));
+      form.reset();
       boot();
     } catch (err) { $('#loginErr').textContent = err.message; }
   });
@@ -391,7 +392,8 @@
       };
       $('#pwForm').onsubmit = async e => {
         e.preventDefault();
-        try { await send('/api/admin/password', 'POST', Object.fromEntries(new FormData(e.currentTarget))); e.currentTarget.reset(); toast('Credentials updated'); } catch (err) { toast(err.message, true); }
+        const form = e.currentTarget; // Save before await; currentTarget is cleared after the event callback yields.
+        try { await send('/api/admin/password', 'POST', Object.fromEntries(new FormData(form))); form.reset(); toast('Credentials updated'); } catch (err) { toast(err.message, true); }
       };
     }
   };
