@@ -231,15 +231,29 @@
         const categoryDifference = categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
         return (categoryDifference || a.name.localeCompare(b.name));
       });
-      const featuredNames = featuredProducts.slice(0, 3).map(product => esc(product.name)).join(', ');
       const duoProducts = duoProductIds.map(id => prods.find(product => product.id === id)).filter(Boolean);
       const suiteProducts = suiteProductIds.map(id => prods.find(product => product.id === id)).filter(Boolean);
       const productTotal = products => products.reduce((total, product) => total + Number(product.price || 0), 0);
       const compareTotal = products => products.reduce((total, product) => total + Number(product.comparePrice || product.price || 0), 0);
+      const ritualIndex = routineSteps.map(([stage, matchesProduct], index) => {
+        const product = prods.find(matchesProduct);
+        const href = product
+          ? `/product/${encodeURIComponent(product.slug || product.id)}`
+          : `/shop?c=${encodeURIComponent(stage)}`;
+        return `
+          <a class="af-folio-step" href="${esc(href)}" data-link>
+            <span class="af-folio-step__number">${String(index + 1).padStart(2, '0')}</span>
+            <span class="af-folio-step__details">
+              <span class="af-folio-step__name">${esc(stage)}</span>
+              <span class="af-folio-step__product">${esc(product?.name || 'Explore the collection')}</span>
+            </span>
+            <svg class="af-folio-step__arrow" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+          </a>`;
+      }).join('');
       return `
       <div class="home-flow">
       <!-- SECTION 1: HERO EDITORIAL (Inspired by Blabliblu dw-hero) -->
-      <section class="relative w-full overflow-hidden bg-[#F8F5EF] py-12 lg:py-20 border-b border-[#B99A60]/15" id="hero">
+      <section class="relative w-full overflow-hidden bg-[#F8F5EF] py-12 lg:py-20 border-b border-[#B99A60]/15 af-home-hero" id="hero">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             <!-- Text Column -->
@@ -249,10 +263,10 @@
                 <span class="font-label-eyebrow text-[11px] uppercase text-[#755D35] tracking-[0.25em] font-semibold">The Art of Radiance</span>
               </div>
               <h1 class="font-display-hero text-4xl sm:text-5xl lg:text-[54px] text-[#211D19] tracking-tight font-normal leading-[1.12]">
-                Rituals That Illuminate Every Skin${featuredNames ? ` — <span class="italic font-light text-[#755D35]">${featuredNames}</span>` : ''}
+                Care, in five<br>simple acts.
               </h1>
               <p class="font-body-lg text-[16px] sm:text-[18px] text-[#57524C] font-light leading-relaxed">
-                Pure Care, Real Results, Radiant You. Crafted at the nexus of clinical precision and botanical potency—formulated with fermented rice extract, barrier ceramides, and stabilized bio-vitamins.
+                A gentle, easy-to-follow rhythm for everyday skin care. Find your next step, meet the formula, and make the ritual your own.
               </p>
               
               <!-- Value Ticker Pills (Blabliblu style) -->
@@ -269,7 +283,7 @@
               </div>
 
               <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-3">
-                <a href="/shop" data-link class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] hover:text-[#211D19] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors shadow-sm text-center">
+                <a href="/shop" data-link class="af-home-hero__cta">
                   Shop The Ritual
                 </a>
               </div>
@@ -289,6 +303,7 @@
                   <p class="font-label-caption text-[11px] uppercase tracking-wider text-[#57524C]">Skin-First Care</p>
                 </div>
               </div>
+              <span class="af-home-hero__note">Five steps. A rhythm of your own.</span>
             </div>
 
             <!-- Visual Hero Media -->
@@ -306,6 +321,14 @@
                   <p class="font-body-sm text-[12px] text-[#57524C] leading-snug">
                     Zero parabens, sulfates, micro-plastics, or synthetic irritants.
                   </p>
+                </div>
+                <div class="af-home-folio__index">
+                  <div class="af-home-folio__heading">
+                    <h2>Your daily guide</h2>
+                    <span>Five considered steps</span>
+                  </div>
+                  <div class="af-home-folio__steps">${ritualIndex}</div>
+                  <a class="af-home-folio__all" href="/shop" data-link>Discover every formula <span aria-hidden="true">→</span></a>
                 </div>
               </div>
             </div>
