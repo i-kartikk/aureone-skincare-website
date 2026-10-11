@@ -1,47 +1,32 @@
-/* AUREONÉ — Design System & Tokens
-   Color Palette Specification:
-   - Main background — Clean Ivory: #F8F5EF (Plain, warm, uniform. No texture or gradient.)
-   - Accent — Muted Champagne Gold: #B99A60 (For small accents, thin borders and selected highlights.)
-   - Typography — Soft Black: #211D19 (For headings, body copy and navigation.)
-   - Cards — Pure White: #FFFFFF (For product cards and clean content sections.)
-*/
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Jost:wght@300;400;500;600&family=Pinyon+Script&display=swap');
-
 :root {
-  /* 1. Main background — Clean Ivory */
   --bg-main: #F8F5EF;
   --ivory: #F8F5EF;
-  --ivory-2: #F2EDE4;
-  --ivory-3: #EBE4D5;
-  --sand: #E2D5C0;
-
-  /* 2. Accent — Muted Champagne Gold */
+  --ivory-2: #EAE1D4;
+  --ivory-3: #A99A89;
+  --sand: #A99A89;
+  --primary: #211D19;
   --accent: #B99A60;
   --gold: #B99A60;
-  --gold-2: #C8AE7A;
-  --gold-3: #E3D4B6;
-  --gold-deep: #8E733F;
+  --gold-2: #B99A60;
+  --gold-3: #EAE1D4;
+  --gold-deep: #755D35;
+  --gold-text: #755D35;
   --gold-light: rgba(185, 154, 96, 0.12);
   --border-gold: rgba(185, 154, 96, 0.35);
-
-  /* 3. Typography — Soft Black */
   --text-main: #211D19;
   --ink: #211D19;
-  --ink-2: #423C35;
-  --muted: #7E766C;
-  --muted-light: #A39B90;
-
-  /* 4. Cards — Pure White */
+  --ink-2: #57524C;
+  --muted: #57524C;
+  --muted-light: #A99A89;
   --card-bg: #FFFFFF;
   --white: #FFFFFF;
-  --border-subtle: rgba(33, 29, 25, 0.08);
+  --border-subtle: #EAE1D4;
 
   --danger: #a4452f;
   --ok: #4f7a4a;
 
   --serif: 'Cormorant Garamond', 'Times New Roman', serif;
-  --sans: 'Jost', 'Helvetica Neue', Arial, sans-serif;
-  --script: 'Pinyon Script', cursive;
+  --sans: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
 
   --r-sm: 8px;
   --r: 16px;
@@ -51,7 +36,7 @@
 
   /* Clean luxury surfaces */
   --card-shadow: 0 4px 20px -6px rgba(33, 29, 25, 0.06);
-  --card-shadow-hover: 0 16px 36px -12px rgba(185, 154, 96, 0.22);
+  --card-shadow-hover: 0 16px 36px -12px rgba(33, 29, 25, 0.12);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -87,7 +72,7 @@ input, select, textarea { font: inherit; color: inherit; }
   font-weight: 500;
   letter-spacing: .25em;
   text-transform: uppercase;
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .display {
   font-family: var(--serif);
@@ -98,17 +83,17 @@ input, select, textarea { font: inherit; color: inherit; }
   margin: 0;
 }
 .serif { font-family: var(--serif); }
-.script { font-family: var(--script); color: var(--gold); font-weight: 400; }
+.script { font-family: var(--serif); color: var(--gold-text); font-weight: 400; font-style: italic; }
 .muted { color: var(--muted); }
 
 .gold-text {
-  color: var(--gold);
+  color: var(--gold-text);
 }
 .gold-italic {
   font-family: var(--serif);
   font-style: italic;
   font-weight: 400;
-  color: var(--gold);
+  color: var(--gold-text);
 }
 
 /* Base Buttons */
@@ -124,7 +109,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .btn:active { transform: scale(.98); }
 
 .btn-gold {
-  color: #FFFFFF;
+  color: var(--ink);
   background: var(--gold);
   border: 1px solid var(--gold);
 }
@@ -139,8 +124,8 @@ input, select, textarea { font: inherit; color: inherit; }
   border: 1px solid var(--ink);
 }
 .btn-outline:hover {
-  color: var(--gold);
-  border-color: var(--gold);
+  color: var(--gold-text);
+  border-color: var(--gold-text);
 }
 
 .btn-ghost {
@@ -150,12 +135,17 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .btn-ghost:hover {
   background: var(--gold-light);
-  border-color: var(--gold);
+  border-color: var(--gold-text);
 }
 
 .btn-sm { --h: 38px; padding: 0 20px; font-size: 11px; }
 .btn-block { width: 100%; }
 .btn[disabled] { opacity: .5; pointer-events: none; }
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
 
 .icon-btn {
   width: 40px; height: 40px; border-radius: 50%;
@@ -165,7 +155,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transition: color .25s, background .25s, transform .25s var(--ease);
 }
 .icon-btn:hover {
-  color: var(--gold);
+  color: var(--gold-text);
   background: rgba(185, 154, 96, 0.08);
 }
 .icon-btn svg { width: 20px; height: 20px; }
@@ -182,7 +172,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .textarea { min-height: 120px; resize: vertical; line-height: 1.5; }
 .input:focus, .select:focus, .textarea:focus {
-  border-color: var(--gold);
+  border-color: var(--gold-text);
   box-shadow: 0 0 0 3px rgba(185, 154, 96, 0.16);
 }
 .select {
@@ -210,4 +200,5 @@ input, select, textarea { font: inherit; color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
   .reveal { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
 }
