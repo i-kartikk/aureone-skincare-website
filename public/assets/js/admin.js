@@ -32,6 +32,11 @@
     return data;
   }
   const send = (url, method, body) => api(url, { method, body: JSON.stringify(body) });
+  function notifyStoreUpdate() {
+    try {
+      localStorage.setItem('aureone_last_update', Date.now().toString());
+    } catch {}
+  }
   async function uploadFiles(files) {
     const fd = new FormData();
     [...files].forEach(f => fd.append('files', f));
@@ -168,7 +173,7 @@
         $$('[data-del]').forEach(b => b.onclick = async () => {
           const p = list.find(p => p.id === b.dataset.del);
           if (!confirmBox(`Delete "${p.name}"? This cannot be undone.`)) return;
-          try { await api(`/api/admin/products/${p.id}`, { method: 'DELETE' }); toast('Product deleted'); route(); } catch (e) { toast(e.message, true); }
+          try { await api(`/api/admin/products/${p.id}`, { method: 'DELETE' }); notifyStoreUpdate(); toast('Product deleted'); route(); } catch (e) { toast(e.message, true); }
         });
       };
       $('#q').addEventListener('input', draw);
@@ -211,6 +216,7 @@
           try {
             const o = await send(`/api/admin/orders/${sel.dataset.status}`, 'PATCH', { status: sel.value });
             Object.assign(list.find(x => x.id === o.id), o);
+            notifyStoreUpdate();
             toast(`Order ${o.number} marked ${o.status}`);
             refreshBadges();
           } catch (e) { toast(e.message, true); }
@@ -219,6 +225,7 @@
           if (!confirmBox('Delete this order permanently?')) return;
           await api(`/api/admin/orders/${b.dataset.del}`, { method: 'DELETE' });
           list.splice(list.findIndex(o => o.id === b.dataset.del), 1);
+          notifyStoreUpdate();
           toast('Order deleted'); draw(); refreshBadges();
         });
       };
@@ -263,6 +270,7 @@
           if (!confirmBox('Delete this coupon?')) return;
           await api(`/api/admin/coupons/${b.dataset.del}`, { method: 'DELETE' });
           list.splice(list.findIndex(c => c.id === b.dataset.del), 1);
+          notifyStoreUpdate();
           toast('Coupon deleted'); draw();
         });
       };
@@ -334,11 +342,18 @@
           <td><div class="row-actions"><button class="mini-btn danger" data-del="${r.id}">Delete</button></div></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">No reviews yet.</div>'}</div>`;
         $('#revForm').onsubmit = async e => {
           e.preventDefault();
-          try { list.unshift(await send('/api/admin/reviews', 'POST', Object.fromEntries(new FormData(e.currentTarget)))); toast('Review added'); draw(); } catch (err) { toast(err.message, true); }
+          try {
+            list.unshift(await send('/api/admin/reviews', 'POST', Object.fromEntries(new FormData(e.currentTarget))));
+            notifyStoreUpdate();
+            toast('Review added');
+            draw();
+          } catch (err) { toast(err.message, true); }
         };
         $$('[data-del]').forEach(b => b.onclick = async () => {
           await api(`/api/admin/reviews/${b.dataset.del}`, { method: 'DELETE' });
-          list.splice(list.findIndex(x => x.id === b.dataset.del), 1); draw();
+          list.splice(list.findIndex(x => x.id === b.dataset.del), 1);
+          notifyStoreUpdate();
+          draw();
         });
       };
       draw();
@@ -396,6 +411,7 @@
       $('#saveS').onclick = async () => {
         try {
           settings = await send('/api/admin/settings', 'PUT', Object.fromEntries(new FormData($('#settingsForm'))));
+          notifyStoreUpdate();
           toast('Settings saved');
         } catch (e) { toast(e.message, true); }
       };
@@ -441,6 +457,7 @@
       fd.active = !!fd.active;
       try {
         await send(isNew ? '/api/admin/coupons' : `/api/admin/coupons/${c.id}`, isNew ? 'POST' : 'PUT', fd);
+        notifyStoreUpdate();
         toast(isNew ? 'Coupon created' : 'Coupon saved');
         close();
         route();
@@ -552,6 +569,7 @@
       const body = { ...fd, active: !!fd.active, featured: !!fd.featured, images: p.images, ingredients: p.ingredients, benefits: fd.benefits, variants: p.variants };
       try {
         await send(isNew ? '/api/admin/products' : `/api/admin/products/${p.id}`, isNew ? 'POST' : 'PUT', body);
+        notifyStoreUpdate();
         toast(isNew ? 'Product created' : 'Product saved');
         close();
         route();

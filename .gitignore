@@ -43,3 +43,9 @@ aureone_nextjs/
 .DS_Store
 *.swp
 *.swo
+.agents/
+.claude/
+.codex/
+.impeccable/
+skills-lock.json
+

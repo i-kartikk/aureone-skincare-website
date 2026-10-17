@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F8F5EF">
+  <meta name="description" content="Explore Aureoné skincare: a considered daily ritual, from a gentle cleanse to everyday sun protection.">
+  <title>Skincare, in a considered ritual — AUREONÉ</title>
+  <link rel="icon" type="image/png" href="/assets/img/monogram.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/skin-care-home-copy.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+
+  <div class="announcement">
+    <span>THE ART OF RADIANCE</span>
+    <span class="announcement-divider" aria-hidden="true"></span>
+    <a href="#ritual">Discover the five-step ritual</a>
+  </div>
+
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Aureoné home">
+      <img src="/assets/img/monogram.png" alt="" width="34" height="34">
+      <span class="brand-name">AUREONÉ</span>
+    </a>
+    <nav class="primary-nav" aria-label="Main navigation">
+      <a href="#collection">Skincare</a>
+      <a href="#ritual">The ritual</a>
+      <a href="/about">Our story</a>
+    </nav>
+    <a class="header-action" href="/shop">Shop all</a>
+  </header>
+
+  <main id="main-content">
+    <section class="hero" aria-labelledby="hero-title">
+      <video class="hero-video" id="ritual-video" autoplay muted loop playsinline preload="metadata"
+        poster="/assets/img/hero-ritual-bottles.jpg" aria-hidden="true">
+        <source src="/assets/video/aureone-five-step-ritual.mp4" type="video/mp4">
+      </video>
+      <div class="hero-shade"></div>
+      <div class="hero-content">
+        <h1 id="hero-title">
+          <span class="hero-title-desktop">A ritual for skin<br>that feels like you.</span>
+          <span class="hero-title-mobile">A ritual for<br>your skin.</span>
+        </h1>
+        <p class="hero-description">Five thoughtful steps. A little care, every day.</p>
+        <div class="hero-actions">
+          <a class="button button-light" href="#ritual">Explore the ritual</a>
+          <a class="hero-link" href="#collection">Shop the collection</a>
+        </div>
+      </div>
+      <button class="video-toggle" type="button" aria-label="Pause featured skincare video" aria-pressed="false">
+        <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg>
+        <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 10 6-10 6z"/></svg>
+        <span>Pause film</span>
+      </button>
+      <span class="hero-caption">THE DAILY RITUAL · AUREONÉ</span>
+    </section>
+
+    <section class="section ritual-section" id="ritual" aria-labelledby="ritual-title">
+      <div class="section-heading">
+        <div>
+          <h2 id="ritual-title">Five small steps.<br><em>One considered ritual.</em></h2>
+        </div>
+        <p>Build a rhythm with the formulas made for your everyday. Begin with a clean slate, then move through each step at your own pace.</p>
+      </div>
+      <div class="ritual-list" id="ritual-list" aria-live="polite">
+        <p class="loading-note">Loading the daily ritual…</p>
+      </div>
+    </section>
+
+    <section class="bestsellers-section" aria-labelledby="bestsellers-title">
+      <div class="section-heading section-heading-compact">
+        <div>
+          <h2 id="bestsellers-title">A few favourites,<br><em>to begin with.</em></h2>
+        </div>
+        <a class="text-link" href="#collection">View the full collection</a>
+      </div>
+      <div class="product-rail" id="bestsellers" aria-label="Featured skincare formulas">
+        <p class="loading-note">Loading featured formulas…</p>
+      </div>
+    </section>
+
+    <section class="collection-section section" id="collection" aria-labelledby="collection-title">
+      <div class="collection-intro">
+        <div>
+          <h2 id="collection-title">Find your everyday.</h2>
+          <p>Explore the Aureoné collection, one considered formula at a time.</p>
+        </div>
+        <label class="search-field">
+          <span class="visually-hidden">Search skincare formulas</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+          <input id="product-search" type="search" placeholder="Search formulas" autocomplete="off">
+        </label>
+      </div>
+      <div class="collection-toolbar">
+        <div class="category-filters" id="category-filters" aria-label="Filter products by category"></div>
+        <label class="sort-field">
+          <span>Sort by</span>
+          <select id="product-sort" aria-label="Sort products">
+            <option value="featured">Featured</option>
+            <option value="price-ascending">Price: low to high</option>
+            <option value="price-descending">Price: high to low</option>
+            <option value="name">Name</option>
+          </select>
+        </label>
+      </div>
+      <p class="results-count" id="results-count" aria-live="polite"></p>
+      <div class="product-grid" id="product-grid">
+        <p class="loading-note">Loading the collection…</p>
+      </div>
+      <div class="load-error" id="load-error" role="alert" hidden>
+        <p>We couldn’t load the skincare collection. Check your connection and try again.</p>
+        <button class="button button-dark" id="retry-load" type="button">Try again</button>
+      </div>
+    </section>
+
+    <section class="closing-note" aria-label="Aureoné skincare">
+      <p class="closing-title">Care, with intention.</p>
+      <p>Clean. Treat. Glow. Moisturize. Protect.</p>
+      <a href="#collection">Explore every formula</a>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="footer-brand" href="/" aria-label="Aureoné home">AUREONÉ</a>
+    <span>The Art of Radiance</span>
+    <a href="/shop">Continue to the Aureoné store</a>
+  </footer>
+
+  <script src="/assets/js/skin-care-home-copy.js" defer></script>
+</body>
+</html>

@@ -3,14 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>AUREONÉ — Purposeful Skincare. Real Radiance.</title>
-  <meta name="description" content="AUREONÉ luxury skincare. Purposeful ingredients, consistent care and long-term radiance. Clean, conscious formulations made with care in India.">
+  <title>AUREONÉ — Skin that looks Luminous, feels balanced & belongs to you</title>
+  <meta name="description" content="AUREONÉ luxury skincare. Ritual, Radiance, Refinement. Skin that looks luminous, feels balanced & belongs to you. Discover our 5 signature formulations made with care in India.">
   <meta name="theme-color" content="#F8F5EF">
   <link rel="icon" type="image/png" href="/assets/img/monogram.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script id="tailwind-config">
     tailwind.config = {
@@ -19,56 +18,57 @@
         extend: {
           colors: {
             "surface": "#F8F5EF",
-            "surface-container": "#F2EFE8",
-            "surface-container-low": "#FAF8F3",
+            "surface-container": "#EAE1D4",
+            "surface-container-low": "#F8F5EF",
             "surface-container-lowest": "#FFFFFF",
-            "surface-container-high": "#ECE8DF",
+            "surface-container-high": "#EAE1D4",
             "primary": "#211D19",
             "secondary": "#B99A60",
             "on-surface": "#211D19",
             "on-surface-variant": "#57524C",
-            "outline": "#8C857B",
-            "outline-variant": "rgba(185, 154, 96, 0.25)",
+            "outline": "#A99A89",
+            "outline-variant": "#EAE1D4",
             "primary-container": "#211D19",
             "on-primary": "#FFFFFF"
           },
           fontFamily: {
-            "display-hero": ["Playfair Display", "serif"],
-            "headline-lg": ["Playfair Display", "serif"],
-            "headline-md": ["Playfair Display", "serif"],
-            "headline-sm": ["Playfair Display", "serif"],
-            "body-lg": ["Plus Jakarta Sans", "sans-serif"],
-            "body-md": ["Plus Jakarta Sans", "sans-serif"],
-            "body-sm": ["Plus Jakarta Sans", "sans-serif"],
-            "label-button": ["Plus Jakarta Sans", "sans-serif"],
-            "label-eyebrow": ["Plus Jakarta Sans", "sans-serif"],
-            "label-caption": ["Plus Jakarta Sans", "sans-serif"]
+            "display-hero": ["Cormorant Garamond", "serif"],
+            "headline-lg": ["Cormorant Garamond", "serif"],
+            "headline-md": ["Cormorant Garamond", "serif"],
+            "headline-sm": ["Cormorant Garamond", "serif"],
+            "body-lg": ["Montserrat", "sans-serif"],
+            "body-md": ["Montserrat", "sans-serif"],
+            "body-sm": ["Montserrat", "sans-serif"],
+            "label-button": ["Montserrat", "sans-serif"],
+            "label-eyebrow": ["Montserrat", "sans-serif"],
+            "label-caption": ["Montserrat", "sans-serif"]
           }
         }
       }
     };
   </script>
-  <script src="/assets/js/three.min.js?v=3.0"></script>
-  <link rel="stylesheet" href="/assets/css/theme.css?v=3.0">
-  <link rel="stylesheet" href="/assets/css/store.css?v=3.0">
+  <script src="/assets/js/three.min.js?v=3.5"></script>
+  <script src="/assets/js/lucide.min.js"></script>
+  <link rel="stylesheet" href="/assets/css/theme.css?v=4.2">
+  <link rel="stylesheet" href="/assets/css/store.css?v=6.4">
 </head>
 <body>
   <!-- Top announcement banner & festive milestone perks -->
-  <div class="announce" id="announce">✨ DIWALI RADIANCE CELEBRATION IS LIVE · COMPLIMENTARY CELLULAR GIFTS UNLOCKED ON ORDERS ABOVE ₹999 &amp; ₹1,999 · FREE EXPRESS SHIPPING PAN-INDIA</div>
-  <div class="dw-milestone-strip">
+  <div class="announce" id="announce">RITUAL · RADIANCE · REFINEMENT — SKIN THAT LOOKS LUMINOUS, FEELS BALANCED &amp; BELONGS TO YOU · FREE SHIPPING ABOVE ₹999</div>
+  <div class="dw-milestone-strip" id="milestoneStrip" hidden>
     <div class="dw-milestone-wrap">
       <div class="dw-milestone-tier">
-        <span>Spend <strong>₹999+</strong></span>
+        <span>Spend <strong data-milestone-multiple="1"></strong></span>
         <span>→ Free Gold Spatula &amp; Discovery Sample</span>
       </div>
       <div class="dw-milestone-sep"></div>
       <div class="dw-milestone-tier">
-        <span>Spend <strong>₹1,999+</strong></span>
+        <span>Spend <strong data-milestone-multiple="2"></strong></span>
         <span>→ Free Silk Atelier Sleep Mask</span>
       </div>
       <div class="dw-milestone-sep"></div>
       <div class="dw-milestone-tier">
-        <span>Spend <strong>₹2,999+</strong></span>
+        <span>Spend <strong data-milestone-multiple="3"></strong></span>
         <span>→ Complete Curated Gifting Box &amp; Master Guide</span>
       </div>
     </div>
@@ -89,12 +89,15 @@
         </div>
       </nav>
 
-      <!-- Center Logo -->
+      <!-- Center Logo (Logo + Image 2 Lockup + Floret Line) -->
       <a href="/" class="brand-center" data-link aria-label="AUREONÉ — The Art of Radiance">
-        <img src="/assets/img/monogram.png" alt="" class="brand-mark" id="brandLogo">
-        <div class="brand-identity">
+        <img src="/assets/img/monogram.png" alt="Aureoné Monogram" class="brand-mark" id="brandLogo">
+        <div class="brand-identity-stack">
           <span class="brand-word" id="brandWord">AUREONÉ</span>
-          <span class="brand-tagline" id="brandTagline">The Art of Radiance</span>
+          <span class="brand-tagline" id="brandTagline">THE ART OF RADIANCE</span>
+          <div class="brand-line-floret">
+            <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="brand-floret-img" aria-hidden="true">
+          </div>
         </div>
       </a>
 
@@ -103,13 +106,14 @@
         <div class="nav-links desktop-links" id="navLinksRight">
           <a href="/offers" data-link>Journal</a>
           <a href="/contact" data-link>Contact</a>
+          <a href="/account" data-link>Account</a>
         </div>
         <div class="nav-actions">
           <button class="icon-btn search-btn" id="searchBtn" aria-label="Search collection">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <i data-lucide="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></i>
           </button>
           <button class="icon-btn bag-btn" id="bagBtn" aria-label="Open shopping bag">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg>
+            <i data-lucide="shopping-bag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i>
             <span class="bag-count" id="bagCount">0</span>
           </button>
         </div>
@@ -123,6 +127,7 @@
       <a href="/ritual" data-link>Our Ritual</a>
       <a href="/offers" data-link>Journal & Offers</a>
       <a href="/contact" data-link>Contact</a>
+      <a href="/account" data-link>My Account & Orders</a>
     </div>
   </header>
 
@@ -132,11 +137,11 @@
       <div class="search-modal-head">
         <div class="eyebrow">Search Aureoné</div>
         <button class="icon-btn" id="searchClose" aria-label="Close search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          <i data-lucide="x"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 6 6 18M6 6l12 12"/></svg></i>
         </button>
       </div>
       <div class="search-input-wrap">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" class="search-icon-input"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <i data-lucide="search" class="search-icon-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></i>
         <input type="text" id="searchInput" placeholder="Search formulas, ingredients, concerns..." aria-label="Search">
       </div>
       <div class="search-quick-tags">
@@ -158,10 +163,19 @@
   <footer class="footer">
     <div class="wrap footer-grid">
       <div class="footer-brand">
-        <img src="/assets/img/monogram.png" alt="" class="footer-mark">
-        <div class="brand-word lg">AUREONÉ</div>
-        <div class="eyebrow" id="footTagline">The Art of Radiance</div>
-        <p class="script footer-script">A Brighter You</p>
+        <a href="/" data-link aria-label="AUREONÉ — The Art of Radiance" style="text-decoration:none; display:flex; align-items:center; gap:14px; margin-bottom:14px;">
+          <img src="/assets/img/monogram.png" alt="Aureoné Monogram" class="footer-mark" style="height:44px; width:auto; object-fit:contain; filter:drop-shadow(0 2px 5px rgba(33,29,25,0.08));">
+          <div class="brand-identity-stack" style="align-items:flex-start; text-align:left;">
+            <span class="brand-word" style="font-size:24px; color:#211D19; font-weight:500; letter-spacing:0.22em; margin-right:-0.22em;">AUREONÉ</span>
+            <span class="brand-tagline" style="color:#755D35; font-size:10px; font-weight:600; letter-spacing:0.28em; margin-top:2px; margin-right:-0.28em;">THE ART OF RADIANCE</span>
+            <div class="brand-line-floret" style="justify-content:flex-start; margin-top:4px;">
+              <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="brand-floret-img" style="max-width:125px; filter:contrast(1.15);" aria-hidden="true">
+            </div>
+          </div>
+        </a>
+        <p class="footer-tagline" id="footTagline" style="font-size:13.5px; color:#57524C; line-height:1.6; max-width:290px; margin:0;">
+          We don't formulate for a moment of glow. We formulate for the ritual behind healthy skin.
+        </p>
       </div>
       <div>
         <h4>Shop</h4>
@@ -233,6 +247,6 @@
     </button>
   </nav>
 
-  <script src="/assets/js/store.js?v=3.0"></script>
+  <script src="/assets/js/store.js?v=5.0"></script>
 </body>
 </html>

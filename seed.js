@@ -13,9 +13,9 @@ module.exports = function seed(hashPassword) {
         { size: '50 ml', price: 399, comparePrice: 499, stock: 60 },
         { size: '100 ml', price: 649, comparePrice: 799, stock: 120 }
       ],
-      tagline: 'The purity of rice. The care your skin deserves.',
-      description: 'A soft, low-foam daily cleanser that lifts away dirt, oil and impurities without stripping. Fine natural rice particles gently polish while panthenol and glycerin keep the skin’s moisture balance intact.',
-      benefits: ['Deep cleanses', 'Hydrates', 'Soothes', 'Gentle exfoliation'],
+      tagline: 'Hydrate, Soothe, Prepare',
+      description: 'A soft, low-foam daily face wash that lifts away dirt, oil and impurities without stripping. Fine natural rice particles gently polish while panthenol and glycerin hydrate, soothe, and prepare your skin for active care.',
+      benefits: ['Hydrate, Soothe, Prepare', 'Gentle low-foam cleanse', 'Maintains moisture balance', 'Softens and clarifies'],
       ingredients: [
         { name: 'Rice Extract', note: 'Nourishes and enhances natural radiance.' },
         { name: 'Panthenol', note: 'Soothes and supports the skin barrier.' },
@@ -35,9 +35,9 @@ module.exports = function seed(hashPassword) {
         { size: '15 ml', price: 549, comparePrice: 649, stock: 45 },
         { size: '30 ml', price: 899, comparePrice: 1099, stock: 90 }
       ],
-      tagline: 'Radiance in every drop.',
-      description: 'A lightweight, fast-absorbing serum designed to help control excess oil, even skin tone, hydrate and support the skin barrier — for clearer, healthier and more radiant-looking skin.',
-      benefits: ['Oil control', 'Evens tone', 'Hydrates & plumps', 'Supports barrier'],
+      tagline: 'Balance, Brighten, Refine',
+      description: 'A lightweight, fast-absorbing serum designed to help improve the appearance of the tone, excess oil & dull looking skin — promoting clearer, balanced, and radiant-looking skin.',
+      benefits: ['Balance, Brighten, Refine', 'Help improve the appearance of the tone', 'Balances excess oil', 'Revives dull looking skin', 'Supports barrier'],
       ingredients: [
         { name: 'Niacinamide 5%', note: 'Helps control excess oil, evens skin tone and supports the barrier.' },
         { name: 'Rice Extract', note: 'Nourishes and enhances natural radiance.' },
@@ -50,17 +50,17 @@ module.exports = function seed(hashPassword) {
       featured: true
     },
     {
-      name: 'Lumière C',
-      subtitle: 'Radiance Serum',
+      name: 'Lumière',
+      subtitle: 'Vit C Radiance Serum',
       category: 'Treat',
       price: 1099, comparePrice: 1299, size: '30 ml', stock: 75,
       variants: [
         { size: '15 ml', price: 649, comparePrice: 799, stock: 40 },
         { size: '30 ml', price: 1099, comparePrice: 1299, stock: 75 }
       ],
-      tagline: 'Brighter skin. Brighter days.',
-      description: 'A powerful antioxidant serum that illuminates, protects and revitalizes your skin for a naturally radiant, healthy glow. Lightweight, fast-absorbing and designed for everyday use.',
-      benefits: ['Illuminates', 'Protects', 'Hydrates', 'Renews'],
+      tagline: 'Glow, Brighten, Revitalize',
+      description: 'A powerful antioxidant serum infused with pure Vitamin C to help in glow, brightens dull skin tone, and protects against environmental stressors for lasting radiance.',
+      benefits: ['Vit C Help in glow, Bright', 'Illuminates & protects', 'Brightens dull skin tone', 'Hydrates & renews'],
       ingredients: [
         { name: 'Vitamin C (3-O Ethyl Ascorbic Acid)', note: 'Brightens, boosts radiance and helps even skin tone.' },
         { name: 'Ferulic Acid', note: 'Enhances antioxidant protection and stability.' },
@@ -81,9 +81,9 @@ module.exports = function seed(hashPassword) {
         { size: '25 gm', price: 599, comparePrice: 699, stock: 55 },
         { size: '50 gm', price: 999, comparePrice: 1199, stock: 80 }
       ],
-      tagline: 'A more resilient, radiant you.',
-      description: 'A rich yet lightweight moisturizer designed to restore and strengthen the skin barrier, providing deep hydration and lasting comfort for soft, smooth and healthy-looking skin.',
-      benefits: ['Deep hydration', 'Strengthens barrier', 'Soothes & calms', 'Smoother skin'],
+      tagline: 'Nourish, Protect, Strengthen',
+      description: 'A rich yet lightweight barrier repair moisturizer designed to deeply hydrate, nourish, protect, and strengthen the skin barrier for velvety-soft, healthy skin.',
+      benefits: ['Hydrate', 'Nourish, Protect, Strengthen', 'Strengthens barrier', 'Soothes & calms redness', 'Deep lasting moisture'],
       ingredients: [
         { name: 'Ceramides', note: 'Help repair and maintain a healthy skin barrier.' },
         { name: 'Squalane', note: 'Lightweight, skin-identical nourishment.' },
@@ -104,9 +104,9 @@ module.exports = function seed(hashPassword) {
         { size: '25 gm', price: 449, comparePrice: 549, stock: 70 },
         { size: '50 gm', price: 799, comparePrice: 949, stock: 110 }
       ],
-      tagline: 'Sun protection for a brighter tomorrow.',
+      tagline: 'Shield, Defend, Preserve',
       description: 'A lightweight, non-greasy broad spectrum sunscreen that protects from UVA and UVB rays while ceramides and vitamin E care for the skin. Comfortable, invisible everyday wear.',
-      benefits: ['UVA | UVB protection', 'Prevents sun damage', 'Keeps skin even-toned', 'Lightweight, non-greasy'],
+      benefits: ['Shield, Defend, Preserve', 'UVA | UVB SPF 50 PA++++', 'Prevents sun damage', 'Keeps skin even-toned', 'Lightweight, non-greasy'],
       ingredients: [
         { name: 'Ceramides', note: 'Support the skin barrier.' },
         { name: 'Squalane', note: 'Weightless comfort.' },
@@ -176,11 +176,11 @@ module.exports = function seed(hashPassword) {
     },
     settings: {
       brandName: 'AUREONÉ',
-      tagline: 'The Art of Radiance',
-      announcement: 'Complimentary shipping on orders above ₹999 · Made with care in India',
-      heroEyebrow: 'Purposeful skincare · Real radiance',
+      tagline: 'The Art of Radiance · Ritual, Radiance, Refinement',
+      announcement: 'Ritual · Radiance · Refinement — Skin that looks luminous, feels balanced & belongs to you · Free shipping above ₹999',
+      heroEyebrow: 'Ritual · Radiance · Refinement',
       heroTitle: 'The ritual behind healthy skin.',
-      heroSubtitle: 'We don’t formulate for a moment of glow. We formulate for the ritual behind healthy skin — purposeful ingredients, consistent care and long-term radiance.',
+      heroSubtitle: 'Skin that looks luminous, feels balanced & belongs to you. We don\'t formulate for a moment of glow — we formulate for the ritual behind healthy skin: purposeful ingredients, consistent care and lasting radiance.',
       heroImage: img('range-square-2.jpg'),
       logo: img('monogram.png'),
       aboutTitle: 'The Art of Radiance.',

@@ -545,8 +545,13 @@ app.use(express.static(PUBLIC_DIR, {
   dotfiles: 'deny'
 }));
 
-/* Apply general API rate limiting */
-app.use('/api', globalApiLimiter);
+/* Apply general API rate limiting & ensure real-time no-cache headers on all API responses */
+app.use('/api', (req, res, next) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  next();
+}, globalApiLimiter);
 
 const publicProduct = p => {
   const { createdAt, updatedAt, ...rest } = p;

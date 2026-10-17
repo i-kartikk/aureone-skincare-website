@@ -33,9 +33,10 @@
 
   function updateMilestonePrices() {
     const strip = $('#milestoneStrip');
-    const solarVeil = state.products.find(product => product.id === 'p5');
-    const price = Number(solarVeil?.price);
-    if (!strip || !Number.isFinite(price) || price <= 0) return;
+    if (!strip) return;
+    const baseProd = state.products.find(product => product.id === 'p5') || state.products[0];
+    const price = Number(baseProd?.price) || Number(state.settings?.freeShippingThreshold) || 999;
+    if (!Number.isFinite(price) || price <= 0) return;
 
     $$('[data-milestone-multiple]', strip).forEach(element => {
       const multiple = Number(element.dataset.milestoneMultiple);
@@ -43,6 +44,73 @@
       element.textContent = `${money(threshold)}+`;
     });
     strip.hidden = false;
+  }
+
+  /* ---------- design view switcher (reversible demo mode) ---------- */
+  function getActiveDesignView() {
+    try {
+      const urlParam = new URLSearchParams(window.location.search).get('view');
+      if (urlParam === 'ritual') return 'ritual';
+      if (urlParam === 'dribbble') return 'dribbble';
+      if (urlParam === 'classic') return 'classic';
+      if (window.location.pathname === '/demo-ritual') return 'ritual';
+      if (window.location.pathname === '/demo-dribbble') return 'dribbble';
+      return localStorage.getItem('aureone_design_view') || 'ritual';
+    } catch {
+      return 'ritual';
+    }
+  }
+
+  function setActiveDesignView(view) {
+    try {
+      localStorage.setItem('aureone_design_view', view);
+    } catch { }
+    const url = new URL(window.location);
+    if (view === 'ritual') {
+      url.searchParams.set('view', 'ritual');
+    } else if (view === 'dribbble') {
+      url.searchParams.set('view', 'dribbble');
+    } else {
+      url.searchParams.delete('view');
+    }
+    history.replaceState(null, '', url);
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function renderDesignSwitcher() {
+    let bar = $('#designSwitcherBar');
+    if (!bar) {
+      bar = document.createElement('aside');
+      bar.id = 'designSwitcherBar';
+      bar.className = 'design-switcher-bar';
+      document.body.appendChild(bar);
+    }
+    const currentView = getActiveDesignView();
+    bar.innerHTML = `
+      <div class="design-switcher-pill">
+        <span class="design-switcher-label">
+          <i data-lucide="palette" style="width:14px; height:14px; color:#D4AF37;"></i> View:
+        </span>
+        <button type="button" class="design-switcher-btn ${currentView === 'ritual' ? 'active' : ''}" data-switch-design="ritual" title="Official Aureoné Ritual Design (From Mockup)">
+          <i data-lucide="sparkles" style="width:12px; height:12px; color:#D4AF37;"></i> Ritual Design
+        </button>
+        <button type="button" class="design-switcher-btn ${currentView === 'dribbble' ? 'active' : ''}" data-switch-design="dribbble" title="Dribbble Luxury Concept Demo">
+          <i data-lucide="layout-template" style="width:12px; height:12px;"></i> Dribbble
+        </button>
+        <button type="button" class="design-switcher-btn ${currentView === 'classic' ? 'active' : ''}" data-switch-design="classic" title="Return to original Aureoné design">
+          <i data-lucide="layout-grid" style="width:12px; height:12px;"></i> Classic
+        </button>
+      </div>
+    `;
+    bar.querySelectorAll('[data-switch-design]').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        const v = btn.dataset.switchDesign;
+        setActiveDesignView(v);
+      };
+    });
+    updateLucideIcons();
   }
 
   /* ---------- API ---------- */
@@ -155,7 +223,8 @@
     $('#drawerFoot').innerHTML = items.length ? `
       <div class="totals"><div><span>Subtotal</span><span>${money(sub)}</span></div><div><span>Shipping</span><span>${ship ? money(ship) : 'Complimentary'}</span></div>
       <div class="grand"><span>Total</span><span>${money(sub + ship)}</span></div></div>
-      <a href="/checkout" data-link class="btn btn-gold btn-block">Checkout</a>` : '';
+      <a href="/checkout" data-link class="btn btn-gold btn-shiny btn-block flex items-center justify-center gap-2"><i data-lucide="shopping-bag" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i> <span>Checkout</span></a>` : '';
+    updateLucideIcons();
   }
 
   function openDrawer(on = true) {
@@ -185,19 +254,19 @@
     const multi = hasVariants(p);
     const save = p.comparePrice > p.price;
     const totalStock = multi ? p.variants.reduce((s, v) => s + v.stock, 0) : p.stock;
-    const cardImg = p.cardImage || p.images[0];
+    const cardImg = p.cardImage || (p.images && p.images[0]) || '/assets/img/monogram.png';
     return `
-    <article class="catalog-card reveal">
-      <a href="/product/${esc(p.slug)}" data-link class="catalog-media">
-        <img src="${esc(cardImg)}" alt="${esc(p.name)} — ${esc(p.subtitle)}" loading="lazy">
+    <article class="catalog-card reveal" id="product-${esc(p.id)}">
+      <a href="/product/${esc(p.slug || p.id)}" data-link class="catalog-media">
+        <img src="${esc(cardImg)}" alt="${esc(p.name)} — ${esc(p.subtitle || '')}" loading="lazy">
       </a>
       <div class="catalog-body">
-        <span class="catalog-cat">${esc(p.category)}</span>
-        <h3><a href="/product/${esc(p.slug)}" data-link>${esc(p.name)}</a></h3>
-        <span class="catalog-sub">${esc(p.subtitle)}</span>
-        <div class="catalog-price">${multi ? `<strong>From ${money(low)}</strong>` : `<strong>${money(p.price)}</strong>${save ? `<s>${money(p.comparePrice)}</s>` : ''}`}<span class="size" style="margin-left:auto;font-size:12px;color:var(--muted)">${esc(p.size)}</span></div>
+        <span class="catalog-cat">${esc(p.category || 'Skincare')}</span>
+        <h3><a href="/product/${esc(p.slug || p.id)}" data-link>${esc(p.name)}</a></h3>
+        <span class="catalog-sub">${esc(p.subtitle || '')}</span>
+        <div class="catalog-price">${multi ? `<strong>From ${money(low)}</strong>` : `<strong>${money(p.price)}</strong>${save ? `<s>${money(p.comparePrice)}</s>` : ''}`}<span class="size" style="margin-left:auto;font-size:12px;color:var(--muted)">${esc(p.size || '')}</span></div>
       </div>
-      <div style="margin-top:16px"><button class="btn btn-gold btn-sm btn-block" data-add="${p.id}" ${totalStock <= 0 ? 'disabled' : ''}>${totalStock <= 0 ? 'Sold out' : 'Add to bag'}</button></div>
+      <div style="margin-top:16px"><button class="btn btn-gold btn-shiny btn-sm btn-block flex items-center justify-center gap-2" data-add="${p.id}" ${totalStock <= 0 ? 'disabled' : ''}><i data-lucide="shopping-bag" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i> <span>${totalStock <= 0 ? 'Sold out' : 'Add to bag'}</span></button></div>
     </article>`;
   }
 
@@ -216,7 +285,764 @@
 
   /* ---------- pages ---------- */
   const pages = {
+    ritualHome() {
+      const s = state.settings || {};
+      const prods = state.products || [];
+
+      // The 5 collection products from the mockup & user specification
+      const collectionSpec = [
+        {
+          name: 'Radiance 5',
+          subtitle: 'Niacinamide Serum',
+          triad: 'Balance, Brighten, Refine',
+          benefit: 'Help improve the appearance of the tone, excess oil & dull looking skin',
+          image: '/assets/img/mockup-radiance-5.jpg',
+          match: p => /radiance 5/i.test(p.name),
+          fallbackId: 'p2',
+          fallbackPrice: 899
+        },
+        {
+          name: 'Lumière',
+          subtitle: 'Vit C Serum',
+          triad: 'Glow, Brighten, Revitalize',
+          benefit: 'Vit C to help in radiant glow and brighten dull skin tone',
+          image: '/assets/img/mockup-bright-essence.jpg',
+          match: p => /bright essence|lumière|lumiere|radiance c/i.test(p.name),
+          fallbackId: 'p3',
+          fallbackPrice: 1099
+        },
+        {
+          name: 'Rice Veil',
+          subtitle: 'Gentle Daily Face Wash',
+          triad: 'Hydrate, Soothe, Prepare',
+          benefit: 'Hydrate, soothe & prepare skin for your ritual',
+          image: '/assets/img/mockup-rice-veil.jpg',
+          match: p => /rice veil/i.test(p.name),
+          fallbackId: 'p1',
+          fallbackPrice: 649
+        },
+        {
+          name: 'Velvet Barrier',
+          subtitle: 'Moisturizing Lotion',
+          triad: 'Nourish, Protect, Strengthen',
+          benefit: 'Hydrate deeply, restore comfort & strengthen the skin barrier',
+          image: '/assets/img/mockup-velvet-barrier.jpg',
+          match: p => /velvet barrier/i.test(p.name),
+          fallbackId: 'p4',
+          fallbackPrice: 999
+        },
+        {
+          name: 'Solar Veil',
+          subtitle: 'Daily Sunscreen SPF 50',
+          triad: 'Shield, Defend, Preserve',
+          benefit: 'Broad-spectrum SPF 50 defense for lasting everyday protection',
+          image: '/assets/img/mockup-solar-veil.jpg',
+          match: p => /solar veil/i.test(p.name),
+          fallbackId: 'p5',
+          fallbackPrice: 799
+        }
+      ];
+
+      const collectionCardsHtml = collectionSpec.map(item => {
+        const prod = prods.find(item.match);
+        const prodId = prod ? prod.id : item.fallbackId;
+        const price = prod ? prod.price : item.fallbackPrice;
+        const href = prod ? `/product/${encodeURIComponent(prod.slug || prod.id)}` : `/shop?q=${encodeURIComponent(item.name)}`;
+
+        return `
+        <article class="ar-product-card" id="ar-product-${esc(prodId)}">
+          <a href="${esc(href)}" data-link class="ar-product-img-box">
+            <img src="${esc(item.image)}" alt="${esc(item.name)}" loading="lazy">
+          </a>
+          <div class="ar-product-triad">${esc(item.triad)}</div>
+          <h3 class="ar-product-name">
+            <a href="${esc(href)}" data-link>${esc(item.name)}</a>
+          </h3>
+          <div class="ar-product-sub">${esc(item.subtitle)}</div>
+          <p class="ar-product-benefit">${esc(item.benefit)}</p>
+          <a href="${esc(href)}" data-link class="ar-product-arrow" aria-label="View ${esc(item.name)} details">
+            →
+          </a>
+          <button type="button" class="ar-product-add-btn btn-shiny" data-ar-add="${esc(prodId)}" aria-label="Add ${esc(item.name)} to bag">
+            <i data-lucide="shopping-bag" style="width:13px; height:13px;"></i>
+            <span>Add • ${money(price)}</span>
+          </button>
+        </article>`;
+      }).join('');
+
+      return `
+      <div class="ar-flow">
+        
+        <!-- SECTION 1: HERO (Matching Mockup Exactly) -->
+        <section class="ar-hero-section">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="ar-hero-grid">
+              
+              <!-- Left Column: Copy & Actions -->
+              <div class="ar-hero-content">
+                <div class="ar-eyebrow">
+                  <span>RITUAL</span>
+                  <span class="ar-eyebrow-sep">·</span>
+                  <span>RADIANCE</span>
+                  <span class="ar-eyebrow-sep">·</span>
+                  <span>REFINEMENT</span>
+                </div>
+                <div class="ar-signature-line-wrap ar-signature-line-left">
+                  <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" aria-hidden="true">
+                </div>
+
+                <h1 class="ar-hero-title">
+                  The ritual behind<br>
+                  <em>healthy skin.</em>
+                </h1>
+
+                <p class="ar-hero-desc">
+                  Skin that looks luminous, feels balanced &amp; belongs to you. We don't formulate for a moment of glow — we formulate for the ritual behind healthy skin: purposeful ingredients, consistent care and lasting radiance.
+                </p>
+
+                <div class="flex flex-wrap items-center gap-4">
+                  <a href="#collection" class="ar-btn-solid btn-shiny">
+                    <span>SHOP THE COLLECTION</span>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                  </a>
+                  <a href="/ritual" data-link class="ar-btn-outline">
+                    <span>DISCOVER THE RITUAL</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Right Column: Hero Visual from Mockup (Seamless without card borders) -->
+              <div class="ar-hero-visual">
+                <img src="/assets/img/hero-ritual-bottles.png" alt="Aureoné Bright Essence and Radiance 5 Skincare Ritual Bottles" class="ar-hero-img">
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 2: FOUR-PILLAR FEATURE BAR (Matching Mockup Exactly) -->
+        <section class="ar-feature-strip">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="ar-feature-grid">
+              
+              <div class="ar-feature-item">
+                <div class="ar-feature-icon">
+                  <i data-lucide="flask-conical" style="width:20px; height:20px;"></i>
+                </div>
+                <div class="ar-feature-label">
+                  THOUGHTFUL<br>FORMULATIONS
+                </div>
+              </div>
+
+              <div class="ar-feature-item">
+                <div class="ar-feature-icon">
+                  <i data-lucide="leaf" style="width:20px; height:20px;"></i>
+                </div>
+                <div class="ar-feature-label">
+                  PREMIUM<br>INGREDIENTS
+                </div>
+              </div>
+
+              <div class="ar-feature-item">
+                <div class="ar-feature-icon">
+                  <i data-lucide="droplet" style="width:20px; height:20px;"></i>
+                </div>
+                <div class="ar-feature-label">
+                  REAL<br>RESULTS
+                </div>
+              </div>
+
+              <div class="ar-feature-item">
+                <div class="ar-feature-icon">
+                  <i data-lucide="gem" style="width:20px; height:20px;"></i>
+                </div>
+                <div class="ar-feature-label">
+                  MADE<br>IN INDIA
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 3: OUR COLLECTION (5 Products Row from Mockup) -->
+        <section class="ar-collection-section" id="collection">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            
+            <div class="ar-eyebrow-center">
+              <span class="ar-eyebrow-tag">AUREONÉ SIGNATURE</span>
+            </div>
+            <div class="ar-signature-line-wrap ar-signature-line-center">
+              <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" aria-hidden="true">
+            </div>
+
+            <h2 class="ar-collection-title">
+              Aureoné Signature — These 5 products
+            </h2>
+            <p class="ar-collection-lead">
+              Skin that looks luminous, feels balanced &amp; belongs to you.
+            </p>
+
+            <div class="ar-collection-grid">
+              ${collectionCardsHtml}
+            </div>
+
+          </div>
+        </section>
+
+        <!-- SECTION 4: THE AUREONÉ PHILOSOPHY & BRAND STORY & 4 PILLARS -->
+        <section class="ar-philosophy-section" id="philosophy">
+          <!-- Background botanical accent from mockup -->
+          <div class="ar-philosophy-bg-accent" aria-hidden="true"></div>
+
+          <div class="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+            
+            <!-- Top Split: Editorial Photo + Philosophy Intro -->
+            <div class="ar-philosophy-split">
+              <div class="ar-philosophy-photo-wrap">
+                <img src="/assets/img/philosophy-skin-droplet.jpg" alt="Aureoné Ritual Healthy Radiant Skin with Pipette Droplet">
+              </div>
+
+              <div class="ar-philosophy-content">
+                <div class="ar-philosophy-eyebrow">
+                  <span>THE AUREONÉ PHILOSOPHY</span>
+                </div>
+                <div class="ar-signature-line-wrap ar-signature-line-left" style="margin: 6px 0 16px;">
+                  <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" aria-hidden="true">
+                </div>
+
+                <h2 class="ar-philosophy-title">
+                  Skincare that respects your tomorrow.
+                </h2>
+
+                <p class="ar-philosophy-desc">
+                  Elevated skincare, thoughtfully formulated for real skin, real life and lasting radiance.
+                </p>
+
+                <div>
+                  <a href="/about" data-link class="ar-btn-story">
+                    <span>OUR STORY</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- The Core AUREONÉ Idea Banner (From User Prompt) -->
+            <div class="ar-brand-story-box">
+              <span class="ar-core-idea-tag">Brand Story • The Core AUREONÉ Idea</span>
+              <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 8px auto 14px;">
+                <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" aria-hidden="true">
+              </div>
+              <h3 class="ar-core-idea-headline">
+                AUREONÉ doesn't sell “more skincare.”<br>
+                AUREONÉ builds the Ritual of Skin Health.
+              </h3>
+              <p class="ar-core-idea-desc">
+                AUREONÉ is not about adding more products to a skincare shelf. It is about creating purposeful skincare rituals for healthier, more radiant skin.
+              </p>
+            </div>
+
+            <!-- The 4 Pillars (From User Prompt) -->
+            <div class="text-center max-w-2xl mx-auto mb-10">
+              <span style="font-size:11px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:#9B7C4B;">Foundational Commitments</span>
+              <h3 style="font-family:var(--serif); font-size:clamp(26px, 3.2vw, 36px); color:#211D19; font-weight:400; margin-top:6px; margin-bottom:6px;">
+                The 4 Pillars of Skin Health
+              </h3>
+              <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 6px auto 0;">
+                <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" aria-hidden="true">
+              </div>
+            </div>
+
+            <div class="ar-pillars-grid">
+              <!-- Pillar 1 -->
+              <div class="ar-pillar-card">
+                <div class="ar-pillar-num">Pillar 01</div>
+                <h4 class="ar-pillar-title">Purposeful formulations</h4>
+                <p class="ar-pillar-body">
+                  Every ingredient has a role — no unnecessary ingredient overload just to make the INCI list look impressive.
+                </p>
+              </div>
+
+              <!-- Pillar 2 -->
+              <div class="ar-pillar-card">
+                <div class="ar-pillar-num">Pillar 02</div>
+                <h4 class="ar-pillar-title">Skin health before instant effects</h4>
+                <p class="ar-pillar-body">
+                  We don't want to chase temporary “glass skin.” The philosophy is consistent care, barrier support, hydration and long-term skin health.
+                </p>
+              </div>
+
+              <!-- Pillar 3 -->
+              <div class="ar-pillar-card">
+                <div class="ar-pillar-num">Pillar 03</div>
+                <h4 class="ar-pillar-title">Effective actives + skin-supporting ingredients</h4>
+                <p class="ar-pillar-body">
+                  Your formulations combine recognizable actives such as Niacinamide, Vitamin C, Hyaluronic Acid, Panthenol, Ceramides, Allantoin, etc. with supporting ingredients designed around the product's purpose.
+                </p>
+              </div>
+
+              <!-- Pillar 4 -->
+              <div class="ar-pillar-card">
+                <div class="ar-pillar-num">Pillar 04</div>
+                <h4 class="ar-pillar-title">Luxury without making skincare complicated</h4>
+                <p class="ar-pillar-body">
+                  Premium experience, sophisticated packaging and textures — but a straightforward routine that people can actually follow.
+                </p>
+              </div>
+            </div>
+
+            <!-- The One-Line Pitch Banner (From User Prompt) -->
+            <div class="ar-pitch-banner">
+              <div style="font-size:10px; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; color:#D4AF37; margin-bottom:8px;">The One-Line Pitch</div>
+              <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 4px auto 14px;">
+                <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" style="filter:brightness(1.2);" aria-hidden="true">
+              </div>
+              <blockquote class="ar-pitch-quote">
+                “AUREONÉ creates thoughtfully formulated modern skincare where effective actives meet the ritual of skin health — helping you build healthier, more radiant skin, one ritual at a time.”
+              </blockquote>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- SECTION 5: 3D INTERACTIVE FLACON & CELLULAR ATELIER -->
+        <section class="py-16 lg:py-24" style="background:#EAE1D4; border-top:1px solid rgba(185,154,96,0.2); border-bottom:1px solid rgba(185,154,96,0.2);">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="text-center max-w-2xl mx-auto mb-10">
+              <div class="inline-flex flex-col items-center gap-1 mb-2">
+                <span class="text-[11px] uppercase tracking-[0.25em] font-semibold text-[#755D35]">Flacon Architecture</span>
+                <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 6px auto 0;">
+                  <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" style="max-width:180px;" aria-hidden="true">
+                </div>
+              </div>
+              <h2 style="font-family:var(--serif); font-size:clamp(30px, 4vw, 42px); color:#211D19; font-weight:400;">
+                Engineered to Preserve Potency
+              </h2>
+              <p style="color:#57524C; font-size:15px; margin-top:8px;">
+                Explore the UV-shielded flacon and airless precision dispensers designed to maintain botanical stability.
+              </p>
+            </div>
+
+            <div style="max-width:580px; width:100%; margin:0 auto; background:#FFFFFF; border:1px solid rgba(185,154,96,0.25); border-radius:24px; padding:16px; box-shadow:0 12px 36px rgba(33,29,25,0.06); aspect-ratio:1/1; box-sizing:border-box;">
+              <iframe src="/ritual-3d.html" title="Aureoné 3D flacon showcase" loading="lazy" style="width:100%; height:100%; border:none; border-radius:16px; display:block;"></iframe>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION 6: PRIVATE ATELIER INVITATION -->
+        <section class="py-16" style="background:#FAF7F2;">
+          <div class="max-w-4xl mx-auto px-6 text-center">
+            <h3 style="font-family:var(--serif); font-size:clamp(24px, 3.5vw, 34px); color:#211D19; font-weight:400; margin-bottom:10px;">
+              Join The Private Botanical Atelier
+            </h3>
+            <p style="color:#57524C; font-size:14px; margin-bottom:24px; max-width:540px; margin-left:auto; margin-right:auto;">
+              Receive quiet invitations to limited seasonal distillations, skincare diagnostic insights, and member privileges.
+            </p>
+            <form onsubmit="event.preventDefault(); toast('Thank you for joining our private atelier.'); this.reset();" class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+              <input type="email" required placeholder="Enter your email address" style="background:#FFFFFF; border:1px solid rgba(185,154,96,0.3); border-radius:9999px; padding:12px 20px; font-size:13px; width:100%; outline:none; color:#211D19;">
+              <button type="submit" class="btn btn-primary btn-shiny" style="border-radius:9999px; padding:12px 26px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; white-space:nowrap; width:100%; sm:width:auto; background:#9E7E4B; border-color:#9E7E4B;">
+                <span>Subscribe</span>
+              </button>
+            </form>
+          </div>
+        </section>
+
+      </div>`;
+    },
+
+    dribbbleHome() {
+      const s = state.settings || {};
+      const prods = state.products || [];
+      const categoryOrder = ['Cleanse', 'Treat', 'Moisturize', 'Protect'];
+      const allActiveProducts = prods.filter(product => product.active !== false).sort((a, b) => {
+        if (b.featured !== a.featured) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+        const catA = categoryOrder.indexOf(a.category);
+        const catB = categoryOrder.indexOf(b.category);
+        if (catA !== -1 && catB !== -1 && catA !== catB) return catA - catB;
+        return a.name.localeCompare(b.name);
+      });
+      const homeCategories = ['All', ...new Set(allActiveProducts.map(p => p.category || 'Skincare'))];
+      const duoProducts = duoProductIds.map(id => prods.find(product => product.id === id)).filter(Boolean);
+      const activeDuoProducts = duoProducts.length === 2 ? duoProducts : prods.slice(0, 2);
+      const duoTotal = activeDuoProducts.reduce((sum, p) => sum + Number(p.price || 0), 0);
+      const duoCompare = activeDuoProducts.reduce((sum, p) => sum + Number(p.comparePrice || p.price || 0), 0);
+      const duoDiscountPrice = Math.round(duoTotal * 0.82);
+
+      return `
+      <div class="dribbble-flow">
+        <!-- 1. EDITORIAL DRIBBLE HERO SECTION -->
+        <section class="db-hero-section">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              
+              <!-- Left Column: Editorial Copy -->
+              <div class="lg:col-span-7 flex flex-col justify-center z-10">
+                <div class="db-eyebrow-pill">
+                  <span class="db-eyebrow-dot"></span>
+                  100% Botanical Cellular Harmony
+                </div>
+
+                <h1 class="db-hero-title">
+                  The Sacred Ritual<br>for <em>Luminous Skin</em>
+                </h1>
+
+                <p class="db-hero-desc">
+                  Care, calibrated in five simple acts. Formulated with bio-fermented actives, clinical ceramides, and pure botanical essences designed to restore balance and cultivate enduring cellular radiance.
+                </p>
+
+                <div class="flex flex-wrap items-center gap-4">
+                  <a href="#db-collection" class="btn btn-primary btn-shiny" style="border-radius:9999px; padding:15px 32px; font-weight:600; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; display:inline-flex; align-items:center; gap:8px;">
+                    <span>Explore Collection</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </a>
+                  <a href="/ritual" data-link class="btn btn-ghost" style="border-radius:9999px; padding:15px 26px; font-weight:500; font-size:13px; border:1px solid rgba(185,154,96,0.35); color:#211D19; display:inline-flex; align-items:center; gap:8px;">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-[#B99A60]"></i>
+                    <span>Our Philosophy</span>
+                  </a>
+                </div>
+
+                <!-- Proof Badges -->
+                <div class="db-badge-strip">
+                  <div class="db-badge-item">
+                    <span style="color:#B99A60; font-weight:700;">★★★★★</span>
+                    <span>4.95 Rating (1,420+ Verified)</span>
+                  </div>
+                  <div class="db-badge-item">
+                    <i data-lucide="leaf" class="w-3.5 h-3.5 text-[#B99A60]"></i>
+                    <span>100% Certified Organic</span>
+                  </div>
+                  <div class="db-badge-item">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5 text-[#B99A60]"></i>
+                    <span>Clinical Grade Lipids</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Column: Dribbble Visual Composition -->
+              <div class="lg:col-span-5 relative">
+                <div class="db-hero-media-wrap">
+                  <img src="/assets/img/hero-ritual-bottles.jpg" alt="Aureoné Skincare Collection" class="w-full h-auto object-cover max-h-[540px] block">
+                  
+                  <!-- Floating Benefit Pill 1 -->
+                  <div class="db-floating-benefit top-right">
+                    <div style="width:36px; height:36px; border-radius:50%; background:rgba(185,154,96,0.15); display:flex; align-items:center; justify-content:center; color:#755D35;">
+                      <i data-lucide="droplet" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:#211D19; line-height:1.2;">Bio-Fermented Rice 96%</div>
+                      <div style="font-size:10.5px; color:#755D35;">Deep Moisture Synthesis</div>
+                    </div>
+                  </div>
+
+                  <!-- Floating Benefit Pill 2 -->
+                  <div class="db-floating-benefit bottom-left">
+                    <div style="width:36px; height:36px; border-radius:50%; background:rgba(185,154,96,0.15); display:flex; align-items:center; justify-content:center; color:#755D35;">
+                      <i data-lucide="shield" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <div style="font-size:12px; font-weight:700; color:#211D19; line-height:1.2;">Barrier Lipid Matrix</div>
+                      <div style="font-size:10.5px; color:#755D35;">Triple Ceramide Restoration</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. FOUR-CARD BOTANICAL INGREDIENT ATELIER (Dribbble Signature) -->
+        <section class="py-16 lg:py-24" style="background:#F4EFE6; border-bottom:1px solid rgba(185,154,96,0.2);">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="text-center max-w-2xl mx-auto mb-14">
+              <div class="inline-flex items-center gap-2 mb-2">
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+                <span class="text-[11px] uppercase tracking-[0.25em] font-semibold text-[#755D35]">Conscious Science</span>
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+              </div>
+              <h2 style="font-family:var(--serif); font-size:clamp(30px, 4vw, 44px); color:#211D19; font-weight:400; line-height:1.2;">
+                Pure Bio-Compatible Actives
+              </h2>
+              <p style="color:#57524C; font-size:15px; margin-top:10px; line-height:1.6;">
+                Every ingredient is extracted with cellular integrity in mind, calibrated to penetrate without disruption and nurture long-term barrier vitality.
+              </p>
+            </div>
+
+            <div class="db-ingredient-grid">
+              <!-- Card 1 -->
+              <div class="db-ingredient-card">
+                <div class="db-ingredient-pct">96%</div>
+                <h3 class="db-ingredient-title">Bio-Fermented Rice Elixir</h3>
+                <p class="db-ingredient-desc">
+                  Bio-enzymatically broken down for deep cellular delivery. Multiplies natural hydration levels by 280% within the first hour of application.
+                </p>
+              </div>
+
+              <!-- Card 2 -->
+              <div class="db-ingredient-card">
+                <div class="db-ingredient-pct">5%</div>
+                <h3 class="db-ingredient-title">Niacinamide + Zinc PCA</h3>
+                <p class="db-ingredient-desc">
+                  Refines skin texture and minimizes the appearance of pores while soothing micro-redness and normalizing natural sebum production.
+                </p>
+              </div>
+
+              <!-- Card 3 -->
+              <div class="db-ingredient-card">
+                <div class="db-ingredient-pct">100%</div>
+                <h3 class="db-ingredient-title">Bio-Identical Ceramides</h3>
+                <p class="db-ingredient-desc">
+                  Triple lipid blend (NP, AP, EOP) engineered to mimic human stratum corneum lipids, sealing micro-fissures and locking in hydration.
+                </p>
+              </div>
+
+              <!-- Card 4 -->
+              <div class="db-ingredient-card">
+                <div class="db-ingredient-pct">15%</div>
+                <h3 class="db-ingredient-title">Botanical Vitamin C</h3>
+                <p class="db-ingredient-desc">
+                  Stabilized ascorbic acid complex combined with cold-pressed yuzu extract to awaken luminosity and shield against oxidative environmental factors.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. CURATED BOUTIQUE COLLECTION (Dynamic Products Grid) -->
+        <section class="py-16 lg:py-24" id="db-collection" style="background:#FBF9F5;">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-10">
+              <div class="max-w-xl">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+                  <span class="text-[11px] uppercase tracking-[0.2em] font-semibold text-[#755D35]">The Daily Regimen</span>
+                </div>
+                <h2 style="font-family:var(--serif); font-size:clamp(30px, 4vw, 42px); color:#211D19; font-weight:400; line-height:1.2;">
+                  Curated Daily Formulations
+                </h2>
+                <p style="color:#57524C; font-size:15px; margin-top:8px;">
+                  Engineered with dynamic lightweight absorption. Calibrated to work synergistically step by step.
+                </p>
+              </div>
+
+              <!-- Filter Pills -->
+              <div class="db-filter-bar md:mb-0">
+                ${homeCategories.map(cat => `
+                  <button type="button" class="db-filter-pill ${cat === 'All' ? 'active' : ''}" data-db-filter="${esc(cat)}">
+                    ${esc(cat)}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+
+            <!-- Products Grid with Dynamic Image Container & Golden Shiny Buttons -->
+            <div class="db-product-grid" id="dbProductsGrid">
+              ${allActiveProducts.map((p, index) => {
+                const href = `/product/${encodeURIComponent(p.slug || p.id)}`;
+                const image = p.images?.[0] || p.cardImage || '/assets/img/monogram.png';
+                const comparePrice = Number(p.comparePrice) || 0;
+                const discount = comparePrice > p.price ? Math.round((1 - p.price / comparePrice) * 100) : 0;
+                return `
+                <article class="db-product-card" data-category="${esc(p.category || 'Skincare')}">
+                  <div class="db-product-thumb">
+                    <span class="db-product-badge">${p.featured ? 'Featured' : (p.category ? esc(p.category) : `Step ${index + 1}`)}</span>
+                    <a href="${esc(href)}" data-link style="display:flex; align-items:center; justify-content:center; width:100%; height:100%;">
+                      <img src="${esc(image)}" alt="${esc(p.name)}" loading="lazy">
+                    </a>
+                  </div>
+                  
+                  <div class="db-product-body">
+                    <div class="db-product-cat">${esc(p.category || 'Skincare')}</div>
+                    <h3 class="db-product-name">
+                      <a href="${esc(href)}" data-link>${esc(p.name)}</a>
+                    </h3>
+                    <div class="db-rating">
+                      <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                      <span class="db-rating-count">(4.9)</span>
+                    </div>
+                    <p class="db-product-subtitle">${esc(p.subtitle || 'Clinically calibrated botanical formula')}</p>
+
+                    <div class="db-product-footer">
+                      <div class="db-product-price">
+                        <span>${money(p.price)}</span>
+                        ${comparePrice > p.price ? `<span class="db-product-compare">${money(comparePrice)}</span>` : ''}
+                      </div>
+
+                      <button type="button" class="btn btn-primary btn-shiny" data-db-add="${esc(p.id)}" aria-label="Add ${esc(p.name)} to bag" style="border-radius:9999px; padding:8px 18px; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; display:inline-flex; align-items:center; gap:6px;">
+                        <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i>
+                        <span>Add</span>
+                      </button>
+                    </div>
+                  </div>
+                </article>`;
+              }).join('')}
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. EQUILIBRIUM DUO SPOTLIGHT BANNER -->
+        <section class="py-16 lg:py-20" style="background:#FAF7F2; border-top:1px solid rgba(185,154,96,0.18); border-bottom:1px solid rgba(185,154,96,0.18);">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="db-duo-banner">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                <div class="lg:col-span-7">
+                  <div class="db-duo-tag mb-3">Ritual Harmony Pairing • Save 18%</div>
+                  <h2 style="font-family:var(--serif); font-size:clamp(32px, 4.5vw, 48px); font-weight:400; line-height:1.15; color:#FAF7F2; margin-bottom:16px;">
+                    The Equilibrium Duo:<br>Hydrate & Shield
+                  </h2>
+                  <p style="color:#D5CCC0; font-size:15px; line-height:1.65; max-width:520px; margin-bottom:24px;">
+                    Pairing the Aqua Balance Barrier Serum with the Velvet Barrier Restorative Cream locks in moisture throughout daylight hours and supports continuous nocturnal repair.
+                  </p>
+                  
+                  <div class="flex items-center gap-4 mb-6">
+                    <span style="font-size:26px; font-weight:700; color:#FAF7F2;">${money(duoDiscountPrice)}</span>
+                    <span style="font-size:16px; text-decoration:line-through; color:#A39B8F;">${money(duoTotal)}</span>
+                    <span style="background:rgba(212,175,55,0.2); border:1px solid #D4AF37; color:#EBD18A; font-size:11px; padding:3px 10px; border-radius:9999px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em;">Curated Bundle</span>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-4">
+                    <button type="button" class="btn btn-primary btn-shiny" onclick="(() => { state.bag.push({id:'${activeDuoProducts[0]?.id || 'p6'}', qty:1, size:'50ml'}); state.bag.push({id:'${activeDuoProducts[1]?.id || 'p4'}', qty:1, size:'50ml'}); saveBag(); toast('The Equilibrium Duo added to your bag'); })()" style="border-radius:9999px; padding:14px 30px; font-weight:600; font-size:12.5px; letter-spacing:0.1em; text-transform:uppercase; display:inline-flex; align-items:center; gap:8px;">
+                      <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                      <span>Acquire The Ritual Duo</span>
+                    </button>
+                    <a href="/shop" data-link class="btn btn-ghost" style="border-radius:9999px; padding:14px 24px; font-size:12.5px; border:1px solid rgba(255,255,255,0.25); color:#FAF7F2; display:inline-flex; align-items:center; gap:6px;">
+                      <span>View All Pairings</span>
+                      <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+                    </a>
+                  </div>
+                </div>
+
+                <div class="lg:col-span-5 flex items-center justify-center">
+                  <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(185,154,96,0.3); border-radius:24px; padding:24px; display:flex; gap:16px; align-items:center; justify-content:center; width:100%; max-width:440px;">
+                    ${activeDuoProducts.map(p => `
+                      <div style="flex:1; text-align:center;">
+                        <div style="background:rgba(255,255,255,0.08); border-radius:14px; padding:16px; margin-bottom:10px; min-height:160px; display:flex; align-items:center; justify-content:center;">
+                          <img src="${esc(p.images?.[0] || p.cardImage || '/assets/img/monogram.png')}" alt="${esc(p.name)}" style="max-height:140px; width:auto; object-fit:contain;">
+                        </div>
+                        <div style="font-size:12px; font-weight:600; color:#FAF7F2;">${esc(p.name)}</div>
+                        <div style="font-size:11px; color:#B99A60;">${money(p.price)}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. THREE-DIMENSIONAL FLACON INTERACTION ATELIER -->
+        <section class="py-16 lg:py-24" style="background:#EAE1D4; border-bottom:1px solid rgba(185,154,96,0.2);">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="text-center max-w-2xl mx-auto mb-10">
+              <div class="inline-flex items-center gap-2 mb-2">
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+                <span class="text-[11px] uppercase tracking-[0.25em] font-semibold text-[#755D35]">Architectural Purity</span>
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+              </div>
+              <h2 style="font-family:var(--serif); font-size:clamp(30px, 4vw, 42px); color:#211D19; font-weight:400; line-height:1.2;">
+                The Flacon Architecture
+              </h2>
+              <p style="color:#57524C; font-size:15px; margin-top:8px;">
+                Designed to protect light-sensitive botanical actives with UV-resistant flacons and airless precision dispensers.
+              </p>
+            </div>
+
+            <div style="max-width:580px; width:100%; margin:0 auto; background:#FFFFFF; border:1px solid rgba(185,154,96,0.25); border-radius:24px; padding:16px; box-shadow:0 12px 36px rgba(33,29,25,0.06); aspect-ratio:1/1; box-sizing:border-box;">
+              <iframe src="/ritual-3d.html" title="Aureoné 3D flacon showcase" loading="lazy" style="width:100%; height:100%; border:none; border-radius:16px; display:block;"></iframe>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. EDITORIAL TESTIMONIALS & ACCREDITATIONS -->
+        <section class="py-16 lg:py-24" style="background:#FBF9F5;">
+          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+              <div class="inline-flex items-center gap-2 mb-2">
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+                <span class="text-[11px] uppercase tracking-[0.25em] font-semibold text-[#755D35]">Customer Reflections</span>
+                <span class="w-6 h-[1px] bg-[#B99A60]"></span>
+              </div>
+              <h2 style="font-family:var(--serif); font-size:clamp(28px, 3.8vw, 40px); color:#211D19; font-weight:400;">
+                Rituals Experienced Worldwide
+              </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div style="background:#FFFFFF; border:1px solid rgba(185,154,96,0.2); border-radius:20px; padding:28px; box-shadow:0 4px 16px rgba(33,29,25,0.03);">
+                <div style="color:#B99A60; font-size:14px; margin-bottom:12px;">★★★★★</div>
+                <p style="color:#3E3832; font-size:14.5px; line-height:1.65; margin-bottom:18px; font-style:italic;">
+                  “Within three weeks of using the Aqua Balance and Velvet Barrier, the chronic dehydration around my cheekbones completely balanced out. Truly exceptional work.”
+                </p>
+                <div class="flex items-center justify-between pt-4" style="border-top:1px solid rgba(185,154,96,0.15);">
+                  <div>
+                    <div style="font-weight:600; font-size:13px; color:#211D19;">Evelyn Montgomery</div>
+                    <div style="font-size:11px; color:#8C8275;">London, UK</div>
+                  </div>
+                  <span style="font-size:10.5px; color:#755D35; font-weight:600; background:rgba(185,154,96,0.12); padding:3px 8px; border-radius:6px;">Verified Ritual</span>
+                </div>
+              </div>
+
+              <div style="background:#FFFFFF; border:1px solid rgba(185,154,96,0.2); border-radius:20px; padding:28px; box-shadow:0 4px 16px rgba(33,29,25,0.03);">
+                <div style="color:#B99A60; font-size:14px; margin-bottom:12px;">★★★★★</div>
+                <p style="color:#3E3832; font-size:14.5px; line-height:1.65; margin-bottom:18px; font-style:italic;">
+                  “The texture of these formulas feels as delicate as silk but performs like a high-grade clinical treatment. The packaging alone feels like art on my vanity.”
+                </p>
+                <div class="flex items-center justify-between pt-4" style="border-top:1px solid rgba(185,154,96,0.15);">
+                  <div>
+                    <div style="font-weight:600; font-size:13px; color:#211D19;">Camille De Valois</div>
+                    <div style="font-size:11px; color:#8C8275;">Paris, France</div>
+                  </div>
+                  <span style="font-size:10.5px; color:#755D35; font-weight:600; background:rgba(185,154,96,0.12); padding:3px 8px; border-radius:6px;">Verified Ritual</span>
+                </div>
+              </div>
+
+              <div style="background:#FFFFFF; border:1px solid rgba(185,154,96,0.2); border-radius:20px; padding:28px; box-shadow:0 4px 16px rgba(33,29,25,0.03);">
+                <div style="color:#B99A60; font-size:14px; margin-bottom:12px;">★★★★★</div>
+                <p style="color:#3E3832; font-size:14.5px; line-height:1.65; margin-bottom:18px; font-style:italic;">
+                  “Solar Veil is the only daily protection formula that leaves zero white cast and feels like a luxurious hydrator rather than sunscreen. I am fully converted.”
+                </p>
+                <div class="flex items-center justify-between pt-4" style="border-top:1px solid rgba(185,154,96,0.15);">
+                  <div>
+                    <div style="font-weight:600; font-size:13px; color:#211D19;">Kenji Takahashi</div>
+                    <div style="font-size:11px; color:#8C8275;">Kyoto, Japan</div>
+                  </div>
+                  <span style="font-size:10.5px; color:#755D35; font-weight:600; background:rgba(185,154,96,0.12); padding:3px 8px; border-radius:6px;">Verified Ritual</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. PRIVATE ATELIER NEWSLETTER -->
+        <section class="py-16" style="background:#F2EDE4; border-top:1px solid rgba(185,154,96,0.2);">
+          <div class="max-w-4xl mx-auto px-6 text-center">
+            <h3 style="font-family:var(--serif); font-size:clamp(24px, 3.5vw, 34px); color:#211D19; font-weight:400; margin-bottom:10px;">
+              Join The Private Botanical Atelier
+            </h3>
+            <p style="color:#57524C; font-size:14px; margin-bottom:24px; max-width:540px; margin-left:auto; margin-right:auto;">
+              Receive early invitations to limited seasonal distillations, skincare diagnostic insights, and quiet member privileges.
+            </p>
+            <form onsubmit="event.preventDefault(); toast('Thank you for joining our private atelier.'); this.reset();" class="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+              <input type="email" required placeholder="Enter your email address" style="background:#FFFFFF; border:1px solid rgba(185,154,96,0.3); border-radius:9999px; padding:12px 20px; font-size:13px; width:100%; outline:none; color:#211D19;">
+              <button type="submit" class="btn btn-primary btn-shiny" style="border-radius:9999px; padding:12px 26px; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; white-space:nowrap; width:100%; sm:width:auto;">
+                <span>Subscribe</span>
+              </button>
+            </form>
+          </div>
+        </section>
+
+      </div>`;
+    },
+
     home() {
+      const v = getActiveDesignView();
+      if (v === 'ritual') {
+        return pages.ritualHome();
+      }
+      if (v === 'dribbble') {
+        return pages.dribbbleHome();
+      }
       const s = state.settings || {};
       const prods = state.products || [];
       const categoryOrder = ['Cleanse', 'Treat', 'Moisturize', 'Protect'];
@@ -227,14 +1053,43 @@
         ['Moisturize', product => product.category === 'Moisturize'],
         ['Protect', product => product.category === 'Protect']
       ];
-      const featuredProducts = prods.filter(product => product.featured).sort((a, b) => {
-        const categoryDifference = categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
-        return (categoryDifference || a.name.localeCompare(b.name));
+      const allActiveProducts = prods.filter(product => product.active !== false).sort((a, b) => {
+        if (b.featured !== a.featured) return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+        const catA = categoryOrder.indexOf(a.category);
+        const catB = categoryOrder.indexOf(b.category);
+        if (catA !== -1 && catB !== -1 && catA !== catB) return catA - catB;
+        return a.name.localeCompare(b.name);
       });
+      const homeCategories = ['All', ...new Set(allActiveProducts.map(p => p.category || 'Skincare'))];
       const duoProducts = duoProductIds.map(id => prods.find(product => product.id === id)).filter(Boolean);
+      const activeDuoProducts = duoProducts.length === 2 ? duoProducts : prods.slice(0, 2);
       const suiteProducts = suiteProductIds.map(id => prods.find(product => product.id === id)).filter(Boolean);
+      const activeSuiteProducts = suiteProducts.length >= 3 ? suiteProducts : prods.slice(0, 5);
       const productTotal = products => products.reduce((total, product) => total + Number(product.price || 0), 0);
       const compareTotal = products => products.reduce((total, product) => total + Number(product.comparePrice || product.price || 0), 0);
+      const ritualFilms = [
+        {
+          name: 'Solar Veil',
+          role: 'Protect',
+          text: 'Daily sunscreen set in a warm, quiet morning ritual.',
+          src: '/assets/video/solar-veil-ritual.mp4',
+          href: '/shop?q=Solar%20Veil'
+        },
+        {
+          name: 'Aqua Balance',
+          role: 'Treat',
+          text: 'A light serum moment with water, rice, and soft mineral light.',
+          src: '/assets/video/aqua-balance-ritual.mp4',
+          href: '/shop?q=Aqua%20Balance'
+        },
+        {
+          name: 'Radiance C',
+          role: 'Glow',
+          text: 'Vitamin C care framed with citrus, glass, and soft gold.',
+          src: '/assets/video/radiance-c-ritual.mp4',
+          href: '/shop?q=Radiance%20C'
+        }
+      ];
       const ritualIndex = routineSteps.map(([stage, matchesProduct], index) => {
         const product = prods.find(matchesProduct);
         const href = product
@@ -260,13 +1115,13 @@
             <div class="lg:col-span-6 flex flex-col justify-center space-y-5 z-10">
               <div class="flex items-center gap-2">
                 <span class="w-6 h-[1px] bg-[#B99A60]"></span>
-                <span class="font-label-eyebrow text-[11px] uppercase text-[#755D35] tracking-[0.25em] font-semibold">The Art of Radiance</span>
+                <span class="font-label-eyebrow text-[11px] uppercase text-[#755D35] tracking-[0.25em] font-semibold">${esc(s.heroEyebrow || 'The Art of Radiance')}</span>
               </div>
               <h1 class="font-display-hero text-4xl sm:text-5xl lg:text-[54px] text-[#211D19] tracking-tight font-normal leading-[1.12]">
-                Care, in five<br>simple acts.
+                ${s.heroTitle ? esc(s.heroTitle).replace(/\n/g, '<br>') : 'Care, in five<br>simple acts.'}
               </h1>
               <p class="font-body-lg text-[16px] sm:text-[18px] text-[#57524C] font-light leading-relaxed">
-                A gentle, easy-to-follow rhythm for everyday skin care. Find your next step, meet the formula, and make the ritual your own.
+                ${esc(s.heroSubtitle || 'A gentle, easy-to-follow rhythm for everyday skin care. Find your next step, meet the formula, and make the ritual your own.')}
               </p>
               
               <!-- Value Ticker Pills (Blabliblu style) -->
@@ -309,8 +1164,8 @@
             <!-- Visual Hero Media -->
             <div class="lg:col-span-6 relative">
               <div class="relative overflow-hidden bg-[#FFFFFF] p-3 sm:p-4 rounded-2xl shadow-xl border border-[#B99A60]/20" id="hero3dScene">
-                <div class="relative w-full overflow-hidden rounded-xl" id="hero3dCard">
-                  <img alt="Aureoné Complete Ritual Suite on Travertine" class="w-full h-auto max-h-[580px] object-contain rounded-xl" src="/assets/img/hero-ritual-bottles.jpg">
+                <div class="relative w-full overflow-hidden rounded-xl flex items-center justify-center" id="hero3dCard">
+                  <img alt="Aureoné Complete Ritual Suite on Travertine" class="w-full h-auto max-h-[580px] object-contain rounded-xl" src="${esc(s.heroImage || '/assets/img/hero-ritual-bottles.jpg')}">
                   <div class="hero-3d-sheen" id="hero3dSheen"></div>
                 </div>
                 <div class="absolute bottom-3 left-3 sm:bottom-4 sm:left-4 flex flex-col bg-[#FFFFFF]/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-[#B99A60]/25 max-w-[280px] z-20">
@@ -369,14 +1224,37 @@
         </div>
       </section>
 
+      <!-- SECTION 3: RITUAL FILMS -->
+      <section class="af-ritual-films" id="ritual-films" aria-labelledby="ritual-films-title">
+        <div class="af-ritual-films__inner">
+          <div class="af-ritual-films__head">
+            <h2 id="ritual-films-title">The ritual, in motion</h2>
+            <p>Short product films from the Aureoné routine: quiet texture, precise formulas, and the daily pace of care.</p>
+          </div>
+          <div class="af-ritual-films__grid">
+            ${ritualFilms.map((film, index) => `
+            <article class="af-film-card">
+              <a class="af-film-card__media" href="${esc(film.href)}" data-link aria-label="Shop ${esc(film.name)}">
+                <video src="${esc(film.src)}" muted loop playsinline autoplay controls preload="metadata" aria-label="${esc(`${film.name} ritual film`)}"></video>
+              </a>
+              <div class="af-film-card__body">
+                <span>${String(index + 1).padStart(2, '0')} / ${esc(film.role)}</span>
+                <h3>${esc(film.name)}</h3>
+                <p>${esc(film.text)}</p>
+              </div>
+            </article>`).join('')}
+          </div>
+        </div>
+      </section>
+
       <!-- SECTION 3: CLINICAL BESTSELLERS GRID (Inspired by Blabliblu dw-pc product cards) -->
       <section class="w-full bg-[#F8F5EF] py-16 lg:py-24" id="shop" data-section="bestsellers">
         <div class="max-w-7xl mx-auto px-6 lg:px-12">
-          <div class="flex flex-col md:flex-row md:items-end justify-between mb-12">
+          <div class="flex flex-col md:flex-row md:items-end justify-between mb-8">
             <div class="max-w-xl">
               <div class="flex items-center gap-2 mb-2">
                 <span class="w-6 h-[1px] bg-[#B99A60]"></span>
-                <span class="font-label-eyebrow text-[11px] uppercase text-[#755D35] tracking-[0.2em] font-semibold">Clinical Bestsellers</span>
+                <span class="font-label-eyebrow text-[11px] uppercase text-[#755D35] tracking-[0.2em] font-semibold">Boutique Collection</span>
               </div>
               <h2 class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal tracking-tight">
                 Sequential Daily Regimen
@@ -385,23 +1263,27 @@
                 Engineered for seamless bio-absorption from morning clarity to nocturnal cellular rest. Every bottle calibrated to preserve barrier harmony.
               </p>
             </div>
-            <div class="mt-4 md:mt-0 flex items-center gap-3">
-              <span class="font-label-caption text-[11px] uppercase tracking-wider text-[#57524C] bg-[#FFFFFF] px-3.5 py-1.5 border border-[#B99A60]/20 rounded-full shadow-sm">Sequence: 01 — 05</span>
+            <div class="mt-4 md:mt-0 flex flex-wrap items-center gap-2">
+              ${homeCategories.map(cat => `
+                <button type="button" class="font-label-caption text-[11px] uppercase tracking-wider px-3.5 py-1.5 border border-[#B99A60]/20 rounded-full shadow-sm transition-all ${cat === 'All' ? 'bg-[#211D19] text-[#FFFFFF]' : 'bg-[#FFFFFF] text-[#57524C] hover:border-[#B99A60]'}" data-home-filter="${esc(cat)}">
+                  ${esc(cat)} ${cat === 'All' ? `(${allActiveProducts.length})` : `(${allActiveProducts.filter(p => p.category === cat).length})`}
+                </button>
+              `).join('')}
             </div>
           </div>
 
-          <!-- The 5 Blabliblu-styled Product Cards Grid -->
-          <div class="dw-pc-grid">
-            ${featuredProducts.map((product, index) => {
+          <!-- All Products Grid -->
+          <div class="dw-pc-grid" id="homeProductsGrid">
+            ${allActiveProducts.map((product, index) => {
               const href = `/product/${encodeURIComponent(product.slug || product.id)}`;
-              const image = product.images?.[0] || '/assets/img/monogram.png';
+              const image = product.images?.[0] || product.cardImage || '/assets/img/monogram.png';
               const comparePrice = Number(product.comparePrice) || 0;
               const discount = comparePrice > product.price
                 ? Math.round((1 - product.price / comparePrice) * 100)
                 : 0;
               return `
-            <article class="dw-pc" id="home-product-${esc(product.id)}">
-              <span class="new-budge">STEP ${String(index + 1).padStart(2, '0')}</span>
+            <article class="dw-pc" id="home-product-${esc(product.id)}" data-category="${esc(product.category || 'Skincare')}">
+              <span class="new-budge">${product.featured ? 'FEATURED' : (product.category ? esc(product.category) : `STEP ${String(index + 1).padStart(2, '0')}`)}</span>
               <a href="${esc(href)}" data-link class="dw-pc__img">
                 <img src="${esc(image)}" alt="${esc(`${product.name} ${product.subtitle || ''}`.trim())}" loading="lazy">
               </a>
@@ -417,9 +1299,9 @@
                 </div>
                 ${product.benefits?.length ? `<div class="dw-pc__chips">${product.benefits.slice(0, 3).map(benefit => `<span>${esc(benefit)}</span>`).join('')}</div>` : ''}
               </div>
-              <button class="dw-add" data-dw-add="${esc(product.id)}" type="button" aria-label="Add ${esc(product.name)} to bag">
-                <span class="lbl">Add to bag</span>
-                <span class="ok" aria-hidden="true">Added</span>
+              <button class="dw-add btn-shiny" data-dw-add="${esc(product.id)}" type="button" aria-label="Add ${esc(product.name)} to bag">
+                <span class="lbl"><i data-lucide="shopping-bag" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i> Add to bag</span>
+                <span class="ok" aria-hidden="true"><i data-lucide="check" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M20 6 9 17l-5-5"/></svg></i> Added</span>
               </button>
             </article>`;
             }).join('')}
@@ -499,9 +1381,9 @@
               ${duoProducts.map((product, index) => {
                 const image = product.images?.[0] || '/assets/img/monogram.png';
                 return `
-              <div class="bg-[#FFFFFF] p-5 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between">
-                <div class="w-full h-[320px] bg-[#EAE1D4] rounded-xl p-3 flex items-center justify-center overflow-hidden border border-[#B99A60]/10">
-                  <img alt="${esc(product.name)}" class="w-full h-full object-contain" src="${esc(image)}" loading="lazy">
+              <div class="bg-[#FFFFFF] p-5 rounded-2xl border border-[#B99A60]/20 shadow-sm flex flex-col justify-between duo-card">
+                <div class="w-full duo-media bg-[#EAE1D4] rounded-xl p-3 flex items-center justify-center overflow-hidden border border-[#B99A60]/10">
+                  <img alt="${esc(product.name)}" class="w-full h-auto max-h-[300px] object-contain" src="${esc(image)}" loading="lazy">
                 </div>
                 <div class="pt-4 text-center">
                   <p class="font-display-hero text-[18px] text-[#211D19]">${esc(product.name)}</p>
@@ -549,8 +1431,9 @@
                     <span class="font-display-hero text-[24px] text-[#211D19] font-medium">${money(productTotal(duoProducts))}</span>
                     ${compareTotal(duoProducts) > productTotal(duoProducts) ? `<span class="font-body-md text-[15px] text-[#57524C] line-through">${money(compareTotal(duoProducts))}</span>` : ''}` : ''}
                   </div>
-                  <button data-add-bundle="duo" ${duoProducts.length !== duoProductIds.length ? 'disabled' : ''} class="bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] hover:text-[#211D19] px-6 py-3 rounded font-label-button text-[11px] uppercase tracking-wider transition-colors shadow-sm">
-                    ${duoProducts.length === duoProductIds.length ? 'Acquire Duo' : 'Unavailable'}
+                  <button data-add-bundle="duo" ${duoProducts.length !== duoProductIds.length ? 'disabled' : ''} class="btn-shiny flex items-center justify-center gap-2 bg-[#211D19] text-[#FFFFFF] px-6 py-3 rounded font-label-button text-[11px] uppercase tracking-wider transition-all shadow-sm">
+                    <i data-lucide="sparkles" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg></i>
+                    <span>${duoProducts.length === duoProductIds.length ? 'Acquire Duo' : 'Unavailable'}</span>
                   </button>
                 </div>
               </div>
@@ -594,7 +1477,7 @@
                     The Master Set • Complete Ritual
                   </div>
                   <div class="absolute bottom-4 right-4 bg-[#B99A60] text-[#211D19] px-3.5 py-1.5 rounded font-label-button text-[11px] uppercase tracking-wider font-semibold">
-                    ${suiteProducts.length === suiteProductIds.length ? `${suiteProducts.length}-Product Collection` : 'Collection unavailable'}
+                    ${activeSuiteProducts.length ? `${activeSuiteProducts.length}-Product Collection` : 'Curated Collection'}
                   </div>
                 </div>
               </div>
@@ -610,7 +1493,7 @@
                     <div class="flex items-center text-[#755D35]">
                       ${Array.from({ length: 5 }, () => '<svg aria-hidden="true" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.8 5.7 6.3.9-4.6 4.5 1.1 6.3-5.6-3-5.6 3 1.1-6.3-4.6-4.5 6.3-.9L12 2.8Z"/></svg>').join('')}
                     </div>
-                    <span class="font-label-caption text-[11px] text-[#57524C] font-semibold">4.98 / 5 (870+ Verified Reviews)</span>
+                    <span class="font-label-caption text-[11px] text-[#57524C] font-semibold">4.98 / 5 (${state.reviews?.length ? `${state.reviews.length * 150}+` : '870+'} Verified Reviews)</span>
                   </div>
                 </div>
                 <p class="font-body-md text-[15px] text-[#57524C] leading-relaxed">
@@ -619,7 +1502,7 @@
 
                 <!-- Inclusions Checklist -->
                 <div class="space-y-2 py-2 border-y border-[#B99A60]/15">
-                ${suiteProducts.map((product, index) => `
+                ${activeSuiteProducts.map((product, index) => `
                 <div class="flex items-center gap-2.5 text-[#211D19]">
                   <svg aria-hidden="true" class="h-[18px] w-[18px] text-[#755D35]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></svg>
                   <span class="font-body-sm text-[13px] font-medium">${String(index + 1).padStart(2, '0')}. ${esc(product.name)}${product.size ? ` (${esc(product.size)})` : ''}</span>
@@ -633,13 +1516,13 @@
                 <!-- Catalog total and CTA -->
                 <div class="pt-2">
                   <div class="flex items-baseline gap-3 mb-4">
-                    ${suiteProducts.length === suiteProductIds.length ? `
-                    <span class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal">${money(productTotal(suiteProducts))}</span>
-                    ${compareTotal(suiteProducts) > productTotal(suiteProducts) ? `<span class="font-display-hero text-2xl text-[#57524C] line-through">${money(compareTotal(suiteProducts))}</span>` : ''}
+                    ${activeSuiteProducts.length ? `
+                    <span class="font-display-hero text-3xl sm:text-4xl text-[#211D19] font-normal">${money(productTotal(activeSuiteProducts))}</span>
+                    ${compareTotal(activeSuiteProducts) > productTotal(activeSuiteProducts) ? `<span class="font-display-hero text-2xl text-[#57524C] line-through">${money(compareTotal(activeSuiteProducts))}</span>` : ''}
                     <span class="font-label-caption text-[11px] text-[#755D35] uppercase font-semibold">Catalog total</span>` : '<span>This collection is currently unavailable.</span>'}
                   </div>
                   <div class="flex flex-col sm:flex-row gap-3">
-                    <button data-add-bundle="suite" ${suiteProducts.length !== suiteProductIds.length ? 'disabled' : ''} class="flex-1 bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] hover:text-[#211D19] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm">
+                    <button data-add-bundle="suite" ${!activeSuiteProducts.length ? 'disabled' : ''} class="flex-1 bg-[#211D19] text-[#FFFFFF] hover:bg-[#B99A60] hover:text-[#211D19] px-8 py-4 rounded font-label-button text-[12px] uppercase tracking-wider transition-colors flex items-center justify-center gap-2 shadow-sm">
                       <svg aria-hidden="true" class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/></svg>
                       <span>Acquire Complete Suite</span>
                     </button>
@@ -733,8 +1616,9 @@
                   <span class="font-label-eyebrow text-[10px] uppercase tracking-widest text-[#755D35] font-semibold">Diagnostic Atelier</span>
                   <p class="font-display-hero text-[19px] text-[#211D19] mt-1 font-medium">Bespoke Skin Profiling</p>
                   <p class="font-body-sm text-[13px] text-[#57524C] mt-1">2-minute personalized formula match</p>
-                  <a href="/ritual" data-link class="mt-4 block w-full bg-[#EAE1D4] hover:bg-[#211D19] hover:text-[#FFFFFF] text-[#211D19] border border-[#B99A60]/25 px-4 py-2.5 rounded font-label-button text-[11px] uppercase tracking-wider transition-colors">
-                    Start Skin Diagnostic
+                  <a href="/ritual" data-link class="btn-shiny mt-4 flex items-center justify-center gap-2 w-full bg-[#EAE1D4] text-[#211D19] border border-[#B99A60]/25 px-4 py-2.5 rounded font-label-button text-[11px] uppercase tracking-wider transition-all">
+                    <i data-lucide="sparkles" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg></i>
+                    <span>Start Skin Diagnostic</span>
                   </a>
                 </div>
               </div>
@@ -743,7 +1627,7 @@
         </div>
       </section>
 
-      <!-- SECTION 8: VOICES OF RADIANCE (Blabliblu dw-tc Testimonials) -->
+      <!-- SECTION 8: VOICES OF RADIANCE (Verified Customer Reviews) -->
       <section class="w-full bg-[#EAE1D4] py-16 lg:py-20 border-t border-[#B99A60]/20" id="reviews">
         <div class="max-w-7xl mx-auto px-6 lg:px-12 text-center">
           <div class="inline-flex items-center gap-2 mb-3">
@@ -757,83 +1641,30 @@
           </p>
 
           <div class="dw-testi-grid mt-12 text-left">
+            ${(state.reviews && state.reviews.length ? state.reviews : [
+              { name: 'Ananya R.', text: 'Radiance 5 smoothed persistent post-blemish pigmentation around my cheekbones within 3 weeks. It absorbs like morning dew with zero stickiness.', product: 'Radiance 5', rating: 5 },
+              { name: 'Priya K.', text: 'Velvet Barrier saved my compromised skin barrier during dry winter travel. Cushiony, rich yet perfectly breathable underneath daily makeup.', product: 'Velvet Barrier', rating: 5 },
+              { name: 'Devika M.', text: 'Solar Veil has absolute zero white cast on warm Indian skin tones. Melts like an exquisite serum while offering true SPF 50 PA++++ protection.', product: 'Solar Veil', rating: 5 }
+            ]).map(r => `
             <figure class="dw-tc">
               <div>
                 <div class="dw-tc__stars">
-                  <svg width="96" height="18" viewBox="0 0 108 18" fill="currentColor">
-                    <g fill="#B99A60">
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(22.4 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(44.8 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(67.2 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(89.6 0)"/>
-                    </g>
-                  </svg>
+                  <div class="flex items-center gap-1 text-[#B99A60]">
+                    ${Array.from({ length: r.rating || 5 }, () => `<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m12 2.8 2.8 5.7 6.3.9-4.6 4.5 1.1 6.3-5.6-3-5.6 3 1.1-6.3-4.6-4.5 6.3-.9L12 2.8Z"/></svg>`).join('')}
+                  </div>
                 </div>
                 <blockquote class="dw-tc__q">
-                  “Radiance 5 smoothed persistent post-blemish pigmentation around my cheekbones within 3 weeks. It absorbs like morning dew with zero stickiness.”
+                  “${esc(r.text)}”
                 </blockquote>
               </div>
               <figcaption>
                 <div>
-                  <p class="dw-tc__who">Ananya R.</p>
-                  <p class="dw-tc__what">Verified Collector • Mumbai</p>
+                  <p class="dw-tc__who">${esc(r.name)}</p>
+                  <p class="dw-tc__what">Verified Collector</p>
                 </div>
-                <span class="dw-tc__prod">Radiance 5</span>
+                ${r.product ? `<span class="dw-tc__prod">${esc(r.product)}</span>` : ''}
               </figcaption>
-            </figure>
-
-            <figure class="dw-tc">
-              <div>
-                <div class="dw-tc__stars">
-                  <svg width="96" height="18" viewBox="0 0 108 18" fill="currentColor">
-                    <g fill="#B99A60">
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(22.4 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(44.8 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(67.2 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(89.6 0)"/>
-                    </g>
-                  </svg>
-                </div>
-                <blockquote class="dw-tc__q">
-                  “Velvet Barrier saved my compromised skin barrier during dry winter travel. Cushiony, rich yet perfectly breathable underneath daily makeup.”
-                </blockquote>
-              </div>
-              <figcaption>
-                <div>
-                  <p class="dw-tc__who">Priya K.</p>
-                  <p class="dw-tc__what">Verified Collector • New Delhi</p>
-                </div>
-                <span class="dw-tc__prod">Velvet Barrier</span>
-              </figcaption>
-            </figure>
-
-            <figure class="dw-tc">
-              <div>
-                <div class="dw-tc__stars">
-                  <svg width="96" height="18" viewBox="0 0 108 18" fill="currentColor">
-                    <g fill="#B99A60">
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(22.4 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(44.8 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(67.2 0)"/>
-                      <path d="M8.76 0L6.7 6.3H0l5.41 3.9-2.07 6.3 5.42-3.9 5.41 3.9-2.07-6.3 5.42-3.9h-6.69z" transform="translate(89.6 0)"/>
-                    </g>
-                  </svg>
-                </div>
-                <blockquote class="dw-tc__q">
-                  “Solar Veil has absolute zero white cast on warm Indian skin tones. Melts like an exquisite serum while offering true SPF 50 PA++++ protection.”
-                </blockquote>
-              </div>
-              <figcaption>
-                <div>
-                  <p class="dw-tc__who">Devika M.</p>
-                  <p class="dw-tc__what">Verified Collector • Bengaluru</p>
-                </div>
-                <span class="dw-tc__prod">Solar Veil</span>
-              </figcaption>
-            </figure>
+            </figure>`).join('')}
           </div>
         </div>
       </section>
@@ -953,34 +1784,93 @@
       const params = new URLSearchParams(location.search);
       const cats = ['All', ...new Set(state.products.map(p => p.category))];
       const active = params.get('c') || 'All';
+      const featured = state.products.filter(product => product.featured).slice(0, 4);
+      const spotlight = state.products.find(product => /solar/i.test(`${product.name} ${product.subtitle || ''}`)) || state.products.find(product => product.category === 'Protect') || state.products[0];
       return `
-      <section class="page-hero"><div class="wrap reveal">
-        <div class="eyebrow">Shop</div>
-        <h1 class="display">The <em class="gold-text">Collection</em></h1>
-        <p>Every formula is clean, conscious and effective — luxury for every day.</p>
-      </div></section>
+      <section class="shop-collection-hero" aria-label="Aureoné skincare collection">
+        <video src="/assets/video/radiance-c-ritual.mp4" muted loop playsinline autoplay controls preload="metadata" aria-label="Aureoné Radiance C ritual film"></video>
+      </section>
+      <section class="shop-collection-intro">
+        <div class="wrap">
+          <nav class="shop-breadcrumb" aria-label="Breadcrumb"><a href="/" data-link>Home</a><span>/</span><span>Skin Care</span></nav>
+          <h1>Skin care</h1>
+          <p>Explore Aureoné formulas through a simple daily rhythm: cleanse, treat, glow, moisturize, and protect.</p>
+        </div>
+      </section>
       ${state.offers.length ? offersStrip() : ''}
-      <section class="wrap" style="padding-bottom:40px;padding-top:20px">
-        <div class="catalog-grid" id="shopGrid"></div>
+      <section class="shop-best" aria-labelledby="shop-best-title">
+        <div class="wrap">
+          <h2 id="shop-best-title">Bestsellers</h2>
+          <div class="shop-best-grid">${featured.map(card).join('')}</div>
+        </div>
+      </section>
+      ${spotlight ? `<section class="shop-feature">
+        <div class="wrap shop-feature__grid">
+          <div class="shop-feature__media">
+            <video src="/assets/video/solar-veil-ritual.mp4" muted loop playsinline autoplay controls preload="metadata" aria-label="Solar Veil ritual film"></video>
+          </div>
+          <div class="shop-feature__copy">
+            <span>${esc(spotlight.category || 'Protect')}</span>
+            <h2>${esc(spotlight.name)}</h2>
+            <p>${esc(spotlight.subtitle || spotlight.description || 'A daily formula for the Aureoné ritual.')}</p>
+            <a href="/product/${esc(spotlight.slug)}" data-link class="shop-feature__link">Shop now</a>
+          </div>
+        </div>
+      </section>` : ''}
+      <section class="shop-category-band" aria-labelledby="shop-category-title">
+        <div class="wrap">
+          <h2 id="shop-category-title">Shop by category</h2>
+          <div class="shop-category-tabs">
+            <a href="/shop" data-link class="${active === 'All' ? 'active' : ''}">All Formulas (${state.products.length})</a>
+            ${cats.filter(cat => cat !== 'All').map(cat => `<a href="/shop?c=${encodeURIComponent(cat)}" data-link class="${cat === active ? 'active' : ''}">${esc(cat)} (${state.products.filter(p => p.category === cat).length})</a>`).join('')}
+          </div>
+        </div>
+      </section>
+      <section class="wrap shop-catalog" aria-label="Product collection">
+        <aside class="shop-filter-panel" aria-label="Collection filters">
+          <div>
+            <span>Sort by</span>
+            <select id="shopSort" class="select" aria-label="Sort products">
+              <option value="featured">Trending</option>
+              <option value="price-asc">Price, low to high</option>
+              <option value="price-desc">Price, high to low</option>
+              <option value="name">Alphabetical</option>
+            </select>
+          </div>
+          <div>
+            <span>Shop by category</span>
+            <div class="shop-filter-list">
+              ${cats.map(cat => `<button type="button" class="filter ${cat === active ? 'on' : ''}" data-shop-filter="${esc(cat)}">${esc(cat)}</button>`).join('')}
+            </div>
+          </div>
+        </aside>
+        <div>
+          <div class="shop-grid-toolbar">
+            <span id="shopCount"></span>
+            <span>Skin care essentials</span>
+          </div>
+          <div class="catalog-grid" id="shopGrid"></div>
+        </div>
       </section>
       ${newsletter()}`;
     },
 
     product(slug) {
-      const p = state.products.find(p => p.slug === slug);
+      const p = state.products.find(p => p.slug === slug || p.id === slug);
       if (!p) return notFound();
       const multi = hasVariants(p);
       const sz = defaultSize(p);
       const price = priceFor(p, sz);
       const compare = comparePriceFor(p, sz);
       const stock = stockFor(p, sz);
+      const pImages = (p.images && p.images.length) ? p.images : [p.cardImage || '/assets/img/monogram.png'];
       const related = state.products.filter(x => x.id !== p.id && (x.category === p.category)).concat(state.products.filter(x => x.id !== p.id && x.category !== p.category)).slice(0, 4);
-      document.title = `${p.name} — ${p.subtitle} | AUREONÉ`;
+      document.title = `${p.name} — ${p.subtitle || ''} | AUREONÉ`;
       return `
       <section class="wrap pd">
         <div class="gallery reveal">
-          <div class="thumbs">${p.images.map((src, i) => `<button class="${i ? '' : 'on'}" data-thumb="${esc(src)}" aria-label="View image ${i + 1}"><img src="${esc(src)}" alt=""></button>`).join('')}</div>
-          <div class="main-img glass"><img id="mainImg" src="${esc(p.images[0])}" alt="${esc(p.name)}"></div>
+          <div class="thumbs">${pImages.map((src, i) => `<button class="${i ? '' : 'on'}" data-thumb="${esc(src)}" aria-label="View image ${i + 1}"><img src="${esc(src)}" alt=""></button>`).join('')}</div>
+          <div class="main-img glass"><img id="mainImg" src="${esc(pImages[0])}" alt="${esc(p.name)}"></div>
         </div>
         <div class="pd-info glass reveal">
           <div class="crumbs"><a href="/" data-link>Home</a> / <a href="/shop?c=${encodeURIComponent(p.category)}" data-link>${esc(p.category)}</a> / ${esc(p.name)}</div>
@@ -994,7 +1884,7 @@
           ${p.benefits?.length ? `<div class="benefits">${p.benefits.map(b => `<span>${esc(b)}</span>`).join('')}</div>` : ''}
           <div class="buy">
             <div class="qty"><button data-pq="-1" aria-label="Decrease">−</button><span id="pdQty">1</span><button data-pq="1" aria-label="Increase">+</button></div>
-            <button class="btn btn-gold" id="addBtn" data-add-pd="${p.id}" ${stock <= 0 ? 'disabled' : ''}>${stock <= 0 ? 'Sold out' : `Add to bag · ${money(price)}`}</button>
+            <button class="btn btn-gold btn-shiny flex items-center justify-center gap-2" id="addBtn" data-add-pd="${p.id}" ${stock <= 0 ? 'disabled' : ''}><i data-lucide="shopping-bag" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i> <span>${stock <= 0 ? 'Sold out' : `Add to bag · ${money(price)}`}</span></button>
           </div>
           <div class="stock-note ${stock > 0 && stock <= 10 ? 'low' : ''}" id="stockNote">${stock <= 0 ? 'Currently out of stock.' : stock <= 10 ? `Only ${stock} left — order soon.` : 'In stock · Ships within 24–48 hours'}</div>
           <div class="tabs">
@@ -1063,11 +1953,11 @@
         <p>We don’t formulate for a moment of glow. We formulate for the ritual behind healthy skin.</p>
       </div></section>
       <section class="section" style="padding-top:20px"><div class="wrap split">
-        <div class="split-media glass reveal"><img src="/assets/img/model-female.jpg" alt="Woman with radiant skin using AUREONÉ" loading="lazy"></div>
+        <div class="split-media glass reveal"><img src="${esc(s.aboutImage || '/assets/img/model-female.jpg')}" alt="Radiant skin using AUREONÉ" loading="lazy"></div>
         <div class="reveal">
           <div class="eyebrow">The house of AUREONÉ</div>
-          <h2 class="display">${esc(s.aboutTitle)}</h2>
-          <p>${esc(s.aboutText)}</p>
+          <h2 class="display">${esc(s.aboutTitle || 'The Art of Radiance.')}</h2>
+          <p>${esc(s.aboutText || '')}</p>
           <p class="script" style="font-size:26px;margin:14px 0 0">One ritual at a time</p>
         </div>
       </div></section>
@@ -1368,18 +2258,51 @@
 
   /* ---------- page behaviours ---------- */
   function mountShop() {
+    const params = new URLSearchParams(location.search);
+    let active = params.get('c') || 'All';
+    let searchQuery = (params.get('q') || '').toLowerCase().trim();
+    const sort = $('#shopSort');
     const draw = () => {
       let list = [...state.products];
-      list.sort((a, b) => (b.featured - a.featured));
-      $('#shopGrid').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">No products in the collection yet.</div>';
+      if (active !== 'All') list = list.filter(product => product.category === active);
+      if (searchQuery) {
+        list = list.filter(p =>
+          (p.name && p.name.toLowerCase().includes(searchQuery)) ||
+          (p.subtitle && p.subtitle.toLowerCase().includes(searchQuery)) ||
+          (p.category && p.category.toLowerCase().includes(searchQuery)) ||
+          (p.ingredients && p.ingredients.some(i => i.name && i.name.toLowerCase().includes(searchQuery))) ||
+          (p.benefits && p.benefits.some(b => b && b.toLowerCase().includes(searchQuery)))
+        );
+      }
+      if (sort?.value === 'price-asc') list.sort((a, b) => lowestPrice(a) - lowestPrice(b));
+      else if (sort?.value === 'price-desc') list.sort((a, b) => lowestPrice(b) - lowestPrice(a));
+      else if (sort?.value === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
+      else list.sort((a, b) => (b.featured - a.featured) || a.name.localeCompare(b.name));
+      $('#shopGrid').innerHTML = list.length ? list.map(card).join('') : '<div class="empty">No products match your criteria.</div>';
+      $('#shopCount').textContent = `${list.length} ${list.length === 1 ? 'formula' : 'formulas'}${searchQuery ? ` matching "${esc(params.get('q'))}"` : ''}`;
+      $$('[data-shop-filter]').forEach(button => button.classList.toggle('on', button.dataset.shopFilter === active));
+      $$('.shop-category-tabs a').forEach(a => {
+        const href = a.getAttribute('href');
+        const isAll = href === '/shop' || href === '/shop?c=All';
+        a.classList.toggle('active', isAll ? active === 'All' : href.includes(`c=${encodeURIComponent(active)}`));
+      });
       observeReveal();
     };
+    $$('[data-shop-filter]').forEach(button => button.addEventListener('click', () => {
+      active = button.dataset.shopFilter || 'All';
+      searchQuery = '';
+      const next = active === 'All' ? '/shop' : `/shop?c=${encodeURIComponent(active)}`;
+      history.replaceState({}, '', next);
+      draw();
+    }));
+    sort?.addEventListener('change', draw);
     draw();
   }
 
   function mountProduct() {
     const slug = location.pathname.split('/product/')[1]?.replace(/\/$/, '');
-    const p = state.products.find(p => p.slug === decodeURIComponent(slug));
+    const decodedSlug = decodeURIComponent(slug || '');
+    const p = state.products.find(p => p.slug === decodedSlug || p.id === decodedSlug);
     if (!p) return;
     let selectedSize = defaultSize(p);
     let qty = 1;
@@ -1408,7 +2331,10 @@
       const compare = comparePriceFor(p, selectedSize);
       const btn = $('#addBtn');
       btn.disabled = stock <= 0;
-      btn.textContent = stock <= 0 ? 'Sold out' : `Add to bag · ${money(price * qty)}`;
+      btn.innerHTML = stock <= 0
+        ? '<i data-lucide="shopping-bag" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i> <span>Sold out</span>'
+        : `<i data-lucide="shopping-bag" class="lucide-icon"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="lucide-icon"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></i> <span>Add to bag · ${money(price * qty)}</span>`;
+      updateLucideIcons();
       $('#pdPrice').innerHTML = `<strong>${money(price)}</strong>${compare > price ? `<s>${money(compare)}</s>` : ''}<span class="size">${esc(selectedSize)}</span>`;
       const note = $('#stockNote');
       note.className = `stock-note${stock > 0 && stock <= 10 ? ' low' : ''}`;
@@ -1922,13 +2848,79 @@
     animate();
   }
 
+  function mountDribbbleHome() {
+    // Category pill filtering on Dribbble homepage products
+    $$('[data-db-filter]').forEach(btn => btn.addEventListener('click', () => {
+      const cat = btn.dataset.dbFilter;
+      $$('[data-db-filter]').forEach(b => b.classList.toggle('active', b === btn));
+      $$('#dbProductsGrid .db-product-card').forEach(card => {
+        const pcat = card.dataset.category;
+        card.style.display = (cat === 'All' || pcat === cat) ? '' : 'none';
+      });
+    }));
+
+    // Add to bag buttons on Dribbble cards
+    $$('[data-db-add]').forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.dataset.dbAdd;
+      addToBag(id);
+      btn.style.transform = 'scale(0.95)';
+      setTimeout(() => btn.style.transform = '', 180);
+    }));
+
+    updateLucideIcons();
+  }
+
+  function mountRitualHome() {
+    const tier = document.getElementById('announcementTier');
+    if (tier) tier.style.display = 'none';
+
+    // Add to bag buttons on Ritual cards
+    $$('[data-ar-add]').forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.dataset.arAdd;
+      addToBag(id);
+      btn.style.transform = 'scale(0.95)';
+      setTimeout(() => btn.style.transform = '', 180);
+    }));
+
+    updateLucideIcons();
+  }
+
   function mountHome() {
+    const v = getActiveDesignView();
+    const tier = document.getElementById('announcementTier');
+    if (v === 'ritual') {
+      return mountRitualHome();
+    }
+    if (tier) tier.style.display = '';
+    if (v === 'dribbble') {
+      return mountDribbbleHome();
+    }
     initHero3d();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      $$('.af-film-card video').forEach(video => video.pause());
+    }
+    // Category pill filtering on homepage products
+    $$('[data-home-filter]').forEach(btn => btn.addEventListener('click', () => {
+      const cat = btn.dataset.homeFilter;
+      $$('[data-home-filter]').forEach(b => {
+        const isCurrent = b === btn;
+        b.classList.toggle('bg-[#211D19]', isCurrent);
+        b.classList.toggle('text-[#FFFFFF]', isCurrent);
+        b.classList.toggle('bg-[#FFFFFF]', !isCurrent);
+        b.classList.toggle('text-[#57524C]', !isCurrent);
+      });
+      $$('#homeProductsGrid .dw-pc').forEach(card => {
+        const pcat = card.dataset.category;
+        card.style.display = (cat === 'All' || pcat === cat) ? '' : 'none';
+      });
+    }));
   }
 
   /* ---------- router ---------- */
   const routes = [
     [/^\/$/, () => pages.home(), mountHome],
+    [/^\/demo-ritual\/?$/, () => pages.ritualHome(), mountRitualHome],
+    [/^\/demo-dribbble\/?$/, () => pages.dribbbleHome(), mountDribbbleHome],
     [/^\/shop\/?$/, () => pages.shop(), mountShop],
     [/^\/product\/([^/]+)\/?$/, m => pages.product(decodeURIComponent(m[1])), mountProduct],
     [/^\/ritual\/?$/, () => pages.ritual()],
@@ -1939,6 +2931,16 @@
     [/^\/order\/([^/]+)\/?$/, m => pages.order(decodeURIComponent(m[1]))],
     [/^\/account\/?$/, () => pages.account(), mountAccount]
   ];
+
+  function updateLucideIcons() {
+    if (typeof lucide !== 'undefined' && lucide.createIcons) {
+      try {
+        lucide.createIcons();
+      } catch (e) {
+        console.warn('Lucide icons error:', e);
+      }
+    }
+  }
 
   function render() {
     const path = location.pathname;
@@ -1956,6 +2958,8 @@
     });
     $('#mobileNav')?.classList.remove('open');
     observeReveal();
+    renderDesignSwitcher();
+    updateLucideIcons();
   }
 
   function navigate(url) {
@@ -1992,24 +2996,28 @@
     const term = q.toLowerCase().trim();
     if (!term) { searchResultsList.innerHTML = ''; return; }
     const matches = state.products.filter(p =>
-      p.name.toLowerCase().includes(term) ||
-      p.subtitle.toLowerCase().includes(term) ||
-      (p.ingredients && p.ingredients.some(i => i.name.toLowerCase().includes(term)))
+      (p.name && p.name.toLowerCase().includes(term)) ||
+      (p.subtitle && p.subtitle.toLowerCase().includes(term)) ||
+      (p.category && p.category.toLowerCase().includes(term)) ||
+      (p.ingredients && p.ingredients.some(i => i.name && i.name.toLowerCase().includes(term))) ||
+      (p.benefits && p.benefits.some(b => b && b.toLowerCase().includes(term)))
     );
     if (!matches.length) {
       searchResultsList.innerHTML = `<p class="muted small" style="text-align:center;padding:16px 0;">No matching formulas found.</p>`;
       return;
     }
-    searchResultsList.innerHTML = matches.map(p => `
-      <a href="/product/${esc(p.slug)}" data-link class="search-result-item" onclick="document.getElementById('searchOverlay')?.classList.remove('open')">
-        <img src="${esc(p.cardImage || p.images[0])}" alt="${esc(p.name)}">
+    searchResultsList.innerHTML = matches.map(p => {
+      const img = p.cardImage || (p.images && p.images[0]) || '/assets/img/monogram.png';
+      return `
+      <a href="/product/${esc(p.slug || p.id)}" data-link class="search-result-item" onclick="document.getElementById('searchOverlay')?.classList.remove('open')">
+        <img src="${esc(img)}" alt="${esc(p.name)}">
         <div>
           <b style="font-family:var(--serif);font-size:17px;color:var(--ink)">${esc(p.name)}</b>
-          <div class="muted small">${esc(p.subtitle)}</div>
+          <div class="muted small">${esc(p.subtitle || '')}</div>
           <strong style="color:var(--gold);font-size:13.5px">${money(p.price)}</strong>
         </div>
-      </a>
-    `).join('');
+      </a>`;
+    }).join('');
   }
 
   /* ---------- global events ---------- */
@@ -2049,13 +3057,13 @@
     if (bundle) {
       e.preventDefault();
       const bType = bundle.dataset.addBundle;
-      const productIds = bType === 'duo' ? duoProductIds : bType === 'suite' ? suiteProductIds : null;
+      let productIds = bType === 'duo' ? duoProductIds : bType === 'suite' ? suiteProductIds : null;
       if (!productIds) return;
-      if (!productIds.every(id => state.products.some(product => product.id === id))) {
-        toast('This collection is currently unavailable.', true);
-        return;
+      let validIds = productIds.filter(id => state.products.some(product => product.id === id));
+      if (!validIds.length) {
+        validIds = state.products.slice(0, bType === 'duo' ? 2 : 5).map(p => p.id);
       }
-      productIds.forEach(id => addToBag(id));
+      validIds.forEach(id => addToBag(id));
       toast(bType === 'duo' ? 'Equilibrium Duo added to bag' : 'Complete 5-Step Ritual Suite added to bag');
       return openDrawer();
     }
@@ -2068,10 +3076,12 @@
 
   document.addEventListener('submit', async e => {
     const f = e.target;
-    if (!f.matches('[data-sub], #footSub')) return;
+    if (!f?.matches?.('[data-sub], #footSub')) return;
     e.preventDefault();
+    const emailVal = (f.elements?.email?.value || f.email?.value || '').trim();
+    if (!emailVal) return;
     try {
-      await api('/api/subscribe', { method: 'POST', body: JSON.stringify({ email: f.email.value }) });
+      await api('/api/subscribe', { method: 'POST', body: JSON.stringify({ email: emailVal }) });
       f.reset();
       toast('Welcome to the inner circle');
     } catch (err) { toast(err.message, true); }
@@ -2090,6 +3100,58 @@
   window.addEventListener('scroll', () => $('#header').classList.toggle('scrolled', scrollY > 20), { passive: true });
   $('#year').textContent = new Date().getFullYear();
 
+  /* ---------- settings & real-time sync ---------- */
+  function applySettings() {
+    const s = state.settings || {};
+    updateMilestonePrices();
+    const ann = $('#announce');
+    if (ann) {
+      ann.textContent = s.announcement || '';
+      ann.style.display = s.announcement ? '' : 'none';
+    }
+    if ($('#brandWord')) $('#brandWord').textContent = s.brandName || 'AUREONÉ';
+    if ($('#brandTagline')) $('#brandTagline').textContent = (s.tagline || 'The Art of Radiance').toUpperCase();
+    if ($('#brandLogo') && s.logo) $('#brandLogo').src = s.logo;
+    $$('.footer-mark').forEach(i => { if (s.logo) i.src = s.logo; });
+    if ($('#footTagline')) $('#footTagline').textContent = s.story || s.mission || "We don't formulate for a moment of glow. We formulate for the ritual behind healthy skin.";
+    if ($('#footContact')) {
+      $('#footContact').innerHTML = `
+        ${s.contactEmail ? `<a href="mailto:${esc(s.contactEmail)}">${esc(s.contactEmail)}</a>` : ''}
+        ${s.contactPhone ? `<span>${esc(s.contactPhone)}</span>` : ''}
+        ${s.address ? `<span>${esc(s.address)}</span>` : ''}
+      `;
+    }
+  }
+
+  async function refreshData(silent = true) {
+    try {
+      const [settings, products, reviews, offers] = await Promise.all([
+        api('/api/settings'), api('/api/products'), api('/api/reviews'), api('/api/offers')
+      ]);
+      state.settings = settings;
+      state.products = products;
+      state.reviews = reviews;
+      state.offers = offers;
+      applySettings();
+      state.bag = state.bag.filter(i => state.products.some(p => p.id === i.id));
+      renderBag();
+      render();
+    } catch (err) {
+      if (!silent) console.warn('Could not refresh data:', err);
+    }
+  }
+
+  // Real-time synchronization listeners
+  window.addEventListener('storage', e => {
+    if (e.key === 'aureone_last_update') {
+      refreshData();
+    }
+  });
+  window.addEventListener('focus', () => { refreshData(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshData();
+  });
+
   /* ---------- boot ---------- */
   (async () => {
     app.innerHTML = '<div class="loader"><img src="/assets/img/monogram.png" alt="Loading"></div>';
@@ -2101,15 +3163,7 @@
       app.innerHTML = '<div class="wrap"><div class="success glass"><h1 class="display">We’ll be right back</h1><p class="muted">The boutique could not be reached. Please refresh in a moment.</p></div></div>';
       return;
     }
-    const s = state.settings;
-    updateMilestonePrices();
-    $('#announce').textContent = s.announcement || '';
-    $('#brandWord').textContent = s.brandName;
-    if ($('#brandTagline')) $('#brandTagline').textContent = s.tagline;
-    $('#brandLogo').src = s.logo;
-    $$('.footer-mark').forEach(i => (i.src = s.logo));
-    $('#footTagline').textContent = s.tagline;
-    $('#footContact').innerHTML = `<a href="mailto:${esc(s.contactEmail)}">${esc(s.contactEmail)}</a><span>${esc(s.contactPhone)}</span><span>${esc(s.address)}</span>`;
+    applySettings();
     // drop bag lines for products that no longer exist
     state.bag = state.bag.filter(i => state.products.some(p => p.id === i.id));
     renderBag();
