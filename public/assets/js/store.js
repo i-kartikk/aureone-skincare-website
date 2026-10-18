@@ -289,30 +289,12 @@
       const s = state.settings || {};
       const prods = state.products || [];
 
-      // The 5 collection products from the mockup & user specification
+      // The 5 signature products rearranged in exact sequence:
+      // 1. Clear -> 2. Refine -> 3. Nourish (Noristue) -> 4. Protect -> 5. Shine
       const collectionSpec = [
         {
-          name: 'Radiance 5',
-          subtitle: 'Niacinamide Serum',
-          triad: 'Balance, Brighten, Refine',
-          benefit: 'Help improve the appearance of the tone, excess oil & dull looking skin',
-          image: '/assets/img/mockup-radiance-5.jpg',
-          match: p => /radiance 5/i.test(p.name),
-          fallbackId: 'p2',
-          fallbackPrice: 899
-        },
-        {
-          name: 'Lumière',
-          subtitle: 'Vit C Serum',
-          triad: 'Glow, Brighten, Revitalize',
-          benefit: 'Vit C to help in radiant glow and brighten dull skin tone',
-          image: '/assets/img/mockup-bright-essence.jpg',
-          match: p => /bright essence|lumière|lumiere|radiance c/i.test(p.name),
-          fallbackId: 'p3',
-          fallbackPrice: 1099
-        },
-        {
           name: 'Rice Veil',
+          step: '01 · CLEAR',
           subtitle: 'Gentle Daily Face Wash',
           triad: 'Hydrate, Soothe, Prepare',
           benefit: 'Hydrate, soothe & prepare skin for your ritual',
@@ -322,8 +304,20 @@
           fallbackPrice: 649
         },
         {
+          name: 'Radiance 5',
+          step: '02 · REFINE',
+          subtitle: 'Niacinamide Serum',
+          triad: 'Balance, Brighten, Refine',
+          benefit: 'Help improve the appearance of the tone, excess oil & dull looking skin',
+          image: '/assets/img/mockup-radiance-5.jpg',
+          match: p => /radiance 5/i.test(p.name),
+          fallbackId: 'p2',
+          fallbackPrice: 899
+        },
+        {
           name: 'Velvet Barrier',
-          subtitle: 'Moisturizing Lotion',
+          step: '03 · NOURISH',
+          subtitle: 'Barrier Repair Moisturizer',
           triad: 'Nourish, Protect, Strengthen',
           benefit: 'Hydrate deeply, restore comfort & strengthen the skin barrier',
           image: '/assets/img/mockup-velvet-barrier.jpg',
@@ -333,6 +327,7 @@
         },
         {
           name: 'Solar Veil',
+          step: '04 · PROTECT',
           subtitle: 'Daily Sunscreen SPF 50',
           triad: 'Shield, Defend, Preserve',
           benefit: 'Broad-spectrum SPF 50 defense for lasting everyday protection',
@@ -340,6 +335,17 @@
           match: p => /solar veil/i.test(p.name),
           fallbackId: 'p5',
           fallbackPrice: 799
+        },
+        {
+          name: 'Lumière',
+          step: '05 · SHINE',
+          subtitle: 'Vit C Radiance Serum',
+          triad: 'Glow, Brighten, Revitalize',
+          benefit: 'Vit C to help in radiant glow and brighten dull skin tone',
+          image: '/assets/img/mockup-bright-essence.jpg',
+          match: p => /bright essence|lumière|lumiere|radiance c/i.test(p.name),
+          fallbackId: 'p3',
+          fallbackPrice: 1099
         }
       ];
 
@@ -354,11 +360,12 @@
           <a href="${esc(href)}" data-link class="ar-product-img-box">
             <img src="${esc(item.image)}" alt="${esc(item.name)}" loading="lazy">
           </a>
-          <div class="ar-product-triad">${esc(item.triad)}</div>
+          <div class="ar-product-step">${esc(item.step)}</div>
           <h3 class="ar-product-name">
             <a href="${esc(href)}" data-link>${esc(item.name)}</a>
           </h3>
           <div class="ar-product-sub">${esc(item.subtitle)}</div>
+          <div class="ar-product-triad">${esc(item.triad)}</div>
           <p class="ar-product-benefit">${esc(item.benefit)}</p>
           <a href="${esc(href)}" data-link class="ar-product-arrow" aria-label="View ${esc(item.name)} details">
             →
@@ -375,17 +382,15 @@
         
         <!-- SECTION 1: HERO (Matching Mockup Exactly) -->
         <section class="ar-hero-section">
-          <div class="max-w-7xl mx-auto px-6 lg:px-12">
+          <div class="wrap ar-hero-wrap">
             <div class="ar-hero-grid">
               
               <!-- Left Column: Copy & Actions -->
               <div class="ar-hero-content">
                 <div class="ar-eyebrow">
-                  <span>RITUAL</span>
+                  <span>PURPOSEFUL SKINCARE</span>
                   <span class="ar-eyebrow-sep">·</span>
-                  <span>RADIANCE</span>
-                  <span class="ar-eyebrow-sep">·</span>
-                  <span>REFINEMENT</span>
+                  <span>REAL RADIANCE</span>
                 </div>
                 <div class="ar-signature-line-wrap ar-signature-line-left">
                   <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" aria-hidden="true">
@@ -411,9 +416,9 @@
                 </div>
               </div>
 
-              <!-- Right Column: Hero Visual from Mockup (Seamless without card borders) -->
+              <!-- Right Column: Hero Visual from Mockup (Stretched cleanly to margin, no extra blank space) -->
               <div class="ar-hero-visual">
-                <img src="/assets/img/hero-ritual-bottles.png" alt="Aureoné Bright Essence and Radiance 5 Skincare Ritual Bottles" class="ar-hero-img">
+                <img src="/assets/img/hero-ritual-bottles.jpg" alt="Aureoné Bright Essence and Radiance 5 Skincare Ritual Bottles" class="ar-hero-img">
               </div>
 
             </div>
@@ -592,10 +597,9 @@
               </div>
             </div>
 
-            <!-- The One-Line Pitch Banner (From User Prompt) -->
+            <!-- The One-Line Pitch Banner (Content only, without heading) -->
             <div class="ar-pitch-banner">
-              <div style="font-size:10px; font-weight:700; letter-spacing:0.25em; text-transform:uppercase; color:#D4AF37; margin-bottom:8px;">The One-Line Pitch</div>
-              <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 4px auto 14px;">
+              <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 0 auto 16px;">
                 <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" style="filter:brightness(1.2);" aria-hidden="true">
               </div>
               <blockquote class="ar-pitch-quote">
@@ -1972,7 +1976,6 @@
       </div></section>
       <section class="section" style="padding-top:0"><div class="wrap">
         <div class="section-head reveal">
-          <div class="eyebrow">The one-line pitch</div>
           <h2 class="display" style="font-size:clamp(20px, 2.4vw, 28px);font-style:italic;line-height:1.45;max-width:780px;margin:0 auto">“AUREONÉ creates thoughtfully formulated modern skincare where effective actives meet considered daily care — helping you build healthier, more radiant-looking skin, one ritual at a time.”</h2>
         </div>
       </div></section>
@@ -3113,7 +3116,7 @@
     if ($('#brandTagline')) $('#brandTagline').textContent = (s.tagline || 'The Art of Radiance').toUpperCase();
     if ($('#brandLogo') && s.logo) $('#brandLogo').src = s.logo;
     $$('.footer-mark').forEach(i => { if (s.logo) i.src = s.logo; });
-    if ($('#footTagline')) $('#footTagline').textContent = s.story || s.mission || "We don't formulate for a moment of glow. We formulate for the ritual behind healthy skin.";
+    if ($('#footTagline')) $('#footTagline').textContent = s.story || "A brighter You";
     if ($('#footContact')) {
       $('#footContact').innerHTML = `
         ${s.contactEmail ? `<a href="mailto:${esc(s.contactEmail)}">${esc(s.contactEmail)}</a>` : ''}

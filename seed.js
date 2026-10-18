@@ -50,29 +50,6 @@ module.exports = function seed(hashPassword) {
       featured: true
     },
     {
-      name: 'Lumière',
-      subtitle: 'Vit C Radiance Serum',
-      category: 'Treat',
-      price: 1099, comparePrice: 1299, size: '30 ml', stock: 75,
-      variants: [
-        { size: '15 ml', price: 649, comparePrice: 799, stock: 40 },
-        { size: '30 ml', price: 1099, comparePrice: 1299, stock: 75 }
-      ],
-      tagline: 'Glow, Brighten, Revitalize',
-      description: 'A powerful antioxidant serum infused with pure Vitamin C to help in glow, brightens dull skin tone, and protects against environmental stressors for lasting radiance.',
-      benefits: ['Vit C Help in glow, Bright', 'Illuminates & protects', 'Brightens dull skin tone', 'Hydrates & renews'],
-      ingredients: [
-        { name: 'Vitamin C (3-O Ethyl Ascorbic Acid)', note: 'Brightens, boosts radiance and helps even skin tone.' },
-        { name: 'Ferulic Acid', note: 'Enhances antioxidant protection and stability.' },
-        { name: 'Vitamin E', note: 'Nourishes and protects the skin barrier.' },
-        { name: 'Hyaluronic Acid', note: 'Deeply hydrates and plumps the skin.' }
-      ],
-      howToUse: 'Apply 2–3 drops on clean skin, morning and/or evening. Follow with moisturizer and sunscreen (AM).',
-      skinTypes: 'All skin types',
-      images: [img('lumiere-c-1.jpg'), img('range-tall-1.jpg')],
-      featured: true
-    },
-    {
       name: 'Velvet Barrier',
       subtitle: 'Barrier Repair Moisturizer',
       category: 'Moisturize',
@@ -116,6 +93,29 @@ module.exports = function seed(hashPassword) {
       howToUse: 'Apply generously as the last step of your morning routine, 15 minutes before sun exposure. Reapply every 2–3 hours.',
       skinTypes: 'All skin types',
       images: [img('solar-veil-1.jpg'), img('range-square-2.jpg')],
+      featured: true
+    },
+    {
+      name: 'Lumière',
+      subtitle: 'Vit C Radiance Serum',
+      category: 'Treat',
+      price: 1099, comparePrice: 1299, size: '30 ml', stock: 75,
+      variants: [
+        { size: '15 ml', price: 649, comparePrice: 799, stock: 40 },
+        { size: '30 ml', price: 1099, comparePrice: 1299, stock: 75 }
+      ],
+      tagline: 'Glow, Brighten, Revitalize',
+      description: 'A powerful antioxidant serum infused with pure Vitamin C to help in glow, brightens dull skin tone, and protects against environmental stressors for lasting radiance.',
+      benefits: ['Vit C Help in glow, Bright', 'Illuminates & protects', 'Brightens dull skin tone', 'Hydrates & renews'],
+      ingredients: [
+        { name: 'Vitamin C (3-O Ethyl Ascorbic Acid)', note: 'Brightens, boosts radiance and helps even skin tone.' },
+        { name: 'Ferulic Acid', note: 'Enhances antioxidant protection and stability.' },
+        { name: 'Vitamin E', note: 'Nourishes and protects the skin barrier.' },
+        { name: 'Hyaluronic Acid', note: 'Deeply hydrates and plumps the skin.' }
+      ],
+      howToUse: 'Apply 2–3 drops on clean skin, morning and/or evening. Follow with moisturizer and sunscreen (AM).',
+      skinTypes: 'All skin types',
+      images: [img('lumiere-c-1.jpg'), img('range-tall-1.jpg')],
       featured: true
     },
     {
@@ -176,12 +176,13 @@ module.exports = function seed(hashPassword) {
     },
     settings: {
       brandName: 'AUREONÉ',
-      tagline: 'The Art of Radiance · Ritual, Radiance, Refinement',
-      announcement: 'Ritual · Radiance · Refinement — Skin that looks luminous, feels balanced & belongs to you · Free shipping above ₹999',
-      heroEyebrow: 'Ritual · Radiance · Refinement',
+      tagline: 'The Art of Radiance',
+      announcement: 'Skin that looks luminous, feels balanced & belongs to you · Complimentary shipping above ₹999',
+      heroEyebrow: 'Purposeful Skincare · Real Radiance',
       heroTitle: 'The ritual behind healthy skin.',
       heroSubtitle: 'Skin that looks luminous, feels balanced & belongs to you. We don\'t formulate for a moment of glow — we formulate for the ritual behind healthy skin: purposeful ingredients, consistent care and lasting radiance.',
-      heroImage: img('range-square-2.jpg'),
+      heroImage: img('hero-ritual-bottles.jpg'),
+      story: 'A brighter You',
       logo: img('monogram.png'),
       aboutTitle: 'The Art of Radiance.',
       aboutText: 'AUREONÉ is not about adding more products to a skincare shelf. It is about creating purposeful skincare rituals for healthier, more radiant skin. Every ingredient has a role — no unnecessary overload just to make the INCI list look impressive. We combine effective actives such as Niacinamide, Vitamin C, Hyaluronic Acid, Panthenol, Ceramides and Allantoin with supporting ingredients designed around each product’s purpose. A premium experience, sophisticated packaging and textures — but a straightforward routine that people can actually follow.',
