@@ -52,7 +52,7 @@ components:
 
 ## Overview
 
-Aureoné presents a gentle daily skincare ritual as a practical, shoppable sequence. The homepage's Daily Folio pairs one clear shop action with the five real stages—Clean, Treat, Glow, Moisturize, Protect—and their matching products. Keep the interface calm and editorial: warm paper-like surfaces, precise product photography, and restrained gold details.
+Aureoné presents a gentle daily skincare ritual as a practical, shoppable sequence. The homepage's Daily Folio pairs one clear shop action with the five real stages—Clear, Refine, Glow, Nourish, Protect—and their matching products. Keep the interface calm and editorial: warm paper-like surfaces, precise product photography, and restrained gold details.
 
 Preserve the existing catalog, product facts, prices, navigation, bag, account, and checkout behavior. Do not introduce new efficacy claims or change product content to support a visual concept.
 
@@ -107,7 +107,7 @@ The Folio and primary action use crisp 3–4px corners. Broader site surfaces ma
 
 - Pair the complete product image with a short step number and stage name.
 - Link each step to its matching existing product when available.
-- Keep all five stages in the user-confirmed order: Clean, Treat, Glow, Moisturize, Protect.
+- Keep all five stages in the user-confirmed order: Clear, Refine, Glow, Nourish, Protect.
 
 ### Product card
 

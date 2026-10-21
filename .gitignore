@@ -44,8 +44,11 @@ aureone_nextjs/
 *.swp
 *.swo
 .agents/
+.agent/
 .claude/
 .codex/
+.gemini/
+.gsd/
 .impeccable/
 skills-lock.json
 

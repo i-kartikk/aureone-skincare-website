@@ -27,6 +27,7 @@
 
   --serif: 'Cormorant Garamond', 'Times New Roman', serif;
   --sans: 'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+  --script: 'Pinyon Script', cursive;
 
   --r-sm: 8px;
   --r: 16px;
@@ -83,7 +84,7 @@ input, select, textarea { font: inherit; color: inherit; }
   margin: 0;
 }
 .serif { font-family: var(--serif); }
-.script { font-family: var(--serif); color: var(--gold-text); font-weight: 400; font-style: italic; }
+.script { font-family: var(--script); color: var(--gold-text); font-weight: 400; font-style: normal; }
 .muted { color: var(--muted); }
 
 .gold-text {

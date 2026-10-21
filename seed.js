@@ -52,7 +52,7 @@ module.exports = function seed(hashPassword) {
     {
       name: 'Velvet Barrier',
       subtitle: 'Barrier Repair Moisturizer',
-      category: 'Moisturize',
+      category: 'Moisturiser',
       price: 999, comparePrice: 1199, size: '50 gm', stock: 80,
       variants: [
         { size: '25 gm', price: 599, comparePrice: 699, stock: 55 },
@@ -98,7 +98,7 @@ module.exports = function seed(hashPassword) {
     {
       name: 'Lumière',
       subtitle: 'Vit C Radiance Serum',
-      category: 'Treat',
+      category: 'Glow',
       price: 1099, comparePrice: 1299, size: '30 ml', stock: 75,
       variants: [
         { size: '15 ml', price: 649, comparePrice: 799, stock: 40 },
@@ -182,10 +182,10 @@ module.exports = function seed(hashPassword) {
       heroTitle: 'The ritual behind healthy skin.',
       heroSubtitle: 'Skin that looks luminous, feels balanced & belongs to you. We don\'t formulate for a moment of glow — we formulate for the ritual behind healthy skin: purposeful ingredients, consistent care and lasting radiance.',
       heroImage: img('hero-ritual-bottles.jpg'),
-      story: 'A brighter You',
+      story: 'A Brighter You',
       logo: img('monogram.png'),
       aboutTitle: 'The Art of Radiance.',
-      aboutText: 'AUREONÉ is not about adding more products to a skincare shelf. It is about creating purposeful skincare rituals for healthier, more radiant skin. Every ingredient has a role — no unnecessary overload just to make the INCI list look impressive. We combine effective actives such as Niacinamide, Vitamin C, Hyaluronic Acid, Panthenol, Ceramides and Allantoin with supporting ingredients designed around each product’s purpose. A premium experience, sophisticated packaging and textures — but a straightforward routine that people can actually follow.',
+      aboutText: 'AUREONÉ is not about adding more products to a skincare shelf. It is about creating purposeful skincare rituals for healthier, more radiant skin.',
       aboutImage: img('range-tall-2.jpg'),
       currency: '₹',
       freeShippingThreshold: 999,

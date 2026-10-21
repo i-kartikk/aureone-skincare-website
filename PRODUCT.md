@@ -25,7 +25,7 @@ Visitors browse a product catalog, product details, offers, and the ritual; mana
 ## Capabilities and Constraints
 
 - Preserve current catalog, product detail, navigation, bag, account, and checkout behavior.
-- Keep the five routine stages: Clean, Treat, Glow, Moisturize, Protect.
+- Keep the five routine stages: Clear, Refine, Glow, Nourish, Protect.
 - Do not change product names, prices, ingredients, instructions, or existing claims as part of a visual redesign.
 - Keep the storefront's existing product and editorial content unless a layout requires reorganizing it.
 
