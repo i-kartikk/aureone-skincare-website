@@ -5815,7 +5815,7 @@ body.ar-mode-ritual .dw-milestone-strip {
 }
 
 .ar-pitch-banner {
-  background: linear-gradient(135deg, #24201C 0%, #171412 100%);
+  background: #21170F;
   border: 1px solid rgba(185, 154, 96, 0.35);
   border-radius: 20px;
   padding: 36px 40px;

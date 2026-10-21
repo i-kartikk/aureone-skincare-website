@@ -508,7 +508,7 @@
 
 
             <!-- The One-Line Pitch Banner (Content only, without heading) -->
-            <div class="ar-pitch-banner">
+            <div class="ar-pitch-banner" style="background-color: #21170F; background: #21170F;">
               <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 0 auto 16px;">
                 <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" style="filter:brightness(1.2);" aria-hidden="true">
               </div>

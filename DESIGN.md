@@ -64,6 +64,7 @@ Preserve the existing catalog, product facts, prices, navigation, bag, account, 
 - **Secondary surface:** Light Beige `#EAE1D4` separates calm editorial regions.
 - **Supporting neutrals:** Muted Taupe `#A99A89` is for fine decorative details; secondary text `#57524C` is for small reading copy.
 - **Cards:** White `#FFFFFF` is reserved for product and content surfaces.
+- **Deep Espresso:** `#21170F` for editorial statement boxes, pitch quote banners, and dark contrast moments.
 
 Use the darker secondary text for small copy; keep gold sparing and avoid using Champagne Gold as small text on Warm Ivory.
 

@@ -52,3 +52,5 @@ aureone_nextjs/
 .impeccable/
 skills-lock.json
 
+.vercel
+.env*
