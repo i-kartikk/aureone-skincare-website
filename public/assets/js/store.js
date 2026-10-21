@@ -167,6 +167,16 @@
     $('#scrim').classList.toggle('on', on);
     $('#drawer').setAttribute('aria-hidden', !on);
     document.body.classList.toggle('cart-open', on);
+    const header = document.getElementById('header');
+    if (header) {
+      if (on) {
+        header.style.display = 'none';
+        header.classList.add('hidden');
+      } else {
+        header.style.display = '';
+        header.classList.remove('hidden');
+      }
+    }
   }
 
   /* ---------- shared fragments ---------- */
@@ -496,54 +506,6 @@
               </p>
             </div>
 
-            <!-- The 4 Pillars (From User Prompt) -->
-            <div class="text-center max-w-2xl mx-auto mb-10">
-              <span style="font-size:11px; font-weight:600; letter-spacing:0.24em; text-transform:uppercase; color:#9B7C4B;">Foundational Commitments</span>
-              <h3 style="font-family:var(--serif); font-size:clamp(26px, 3.2vw, 36px); color:#211D19; font-weight:400; margin-top:6px; margin-bottom:6px;">
-                The 4 Pillars of Skin Health
-              </h3>
-              <div class="ar-signature-line-wrap ar-signature-line-center" style="margin: 6px auto 0;">
-                <img src="/assets/img/brand-floret-line-transparent.png" alt="" class="ar-signature-line" aria-hidden="true">
-              </div>
-            </div>
-
-            <div class="ar-pillars-grid">
-              <!-- Pillar 1 -->
-              <div class="ar-pillar-card">
-                <div class="ar-pillar-num">Pillar 01</div>
-                <h4 class="ar-pillar-title">Purposeful formulations</h4>
-                <p class="ar-pillar-body">
-                  Every ingredient has a role — no unnecessary ingredient overload just to make the INCI list look impressive.
-                </p>
-              </div>
-
-              <!-- Pillar 2 -->
-              <div class="ar-pillar-card">
-                <div class="ar-pillar-num">Pillar 02</div>
-                <h4 class="ar-pillar-title">Skin health before instant effects</h4>
-                <p class="ar-pillar-body">
-                  We don't want to chase temporary “glass skin.” The philosophy is consistent care, barrier support, hydration and long-term skin health.
-                </p>
-              </div>
-
-              <!-- Pillar 3 -->
-              <div class="ar-pillar-card">
-                <div class="ar-pillar-num">Pillar 03</div>
-                <h4 class="ar-pillar-title">Effective actives + skin-supporting ingredients</h4>
-                <p class="ar-pillar-body">
-                  Your formulations combine recognizable actives such as Niacinamide, Vitamin C, Hyaluronic Acid, Panthenol, Ceramides, Allantoin, etc. with supporting ingredients designed around the product's purpose.
-                </p>
-              </div>
-
-              <!-- Pillar 4 -->
-              <div class="ar-pillar-card">
-                <div class="ar-pillar-num">Pillar 04</div>
-                <h4 class="ar-pillar-title">Luxury without making skincare complicated</h4>
-                <p class="ar-pillar-body">
-                  Premium experience, sophisticated packaging and textures — but a straightforward routine that people can actually follow.
-                </p>
-              </div>
-            </div>
 
             <!-- The One-Line Pitch Banner (Content only, without heading) -->
             <div class="ar-pitch-banner">
@@ -787,15 +749,7 @@
           <p class="script" style="font-size:26px;margin:14px 0 0">One ritual at a time</p>
         </div>
       </div></section>
-      <section class="section" style="padding-top:0"><div class="wrap">
-        <div class="section-head reveal"><div class="eyebrow">The four pillars</div><h2 class="display">What we stand for</h2></div>
-        <div class="values four-pillars">
-          <div class="value glass reveal">${ring('flask')}<h3>Purposeful Formulations</h3><p>Every ingredient has a role — no unnecessary ingredient overload just to make the INCI list look impressive.</p></div>
-          <div class="value glass reveal">${ring('shield')}<h3>Skin Health First</h3><p>We don’t chase temporary “glass skin.” Our philosophy is consistent care, barrier support, hydration and long-term skin health.</p></div>
-          <div class="value glass reveal">${ring('sparkle')}<h3>Effective Actives</h3><p>Recognizable actives such as Niacinamide, Vitamin C, Hyaluronic Acid, Panthenol, Ceramides and Allantoin — paired with supporting ingredients designed around each product’s purpose.</p></div>
-          <div class="value glass reveal">${ring('heart')}<h3>Luxury, Simplified</h3><p>Premium experience, sophisticated packaging and textures — but a straightforward routine that people can actually follow.</p></div>
-        </div>
-      </div></section>
+
       <section class="section" style="padding-top:0"><div class="wrap">
         <div class="section-head reveal">
           <h2 class="display" style="font-size:clamp(20px, 2.4vw, 28px);font-style:italic;line-height:1.45;max-width:780px;margin:0 auto">“AUREONÉ creates thoughtfully formulated modern skincare where effective actives meet considered daily care — helping you build healthier, more radiant-looking skin, one ritual at a time.”</h2>

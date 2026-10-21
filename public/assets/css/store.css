@@ -2396,7 +2396,10 @@ section { position: relative; }
 
 /* Hide site header & mobile bottom nav when bag / cart is opened so header is never visible or overlapping */
 body.cart-open .site-header,
-body:has(#drawer.on) .site-header {
+body.cart-open #header,
+body:has(#drawer.on) .site-header,
+body:has(#drawer.on) #header {
+  display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
@@ -2404,7 +2407,10 @@ body:has(#drawer.on) .site-header {
 }
 
 body.cart-open .dw-mobile-bottom-nav,
-body:has(#drawer.on) .dw-mobile-bottom-nav {
+body.cart-open nav[aria-label="Mobile quick actions"],
+body:has(#drawer.on) .dw-mobile-bottom-nav,
+body:has(#drawer.on) nav[aria-label="Mobile quick actions"] {
+  display: none !important;
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;

@@ -69,6 +69,16 @@ function verifyPassword(pw, stored) {
 
 /* ---------- JSON file database with atomic writes ---------- */
 let db;
+if (IS_VERCEL && !fs.existsSync(DB_FILE)) {
+  const rootDb = path.join(ROOT, 'data', 'db.json');
+  if (fs.existsSync(rootDb)) {
+    try {
+      fs.copyFileSync(rootDb, DB_FILE);
+    } catch (e) {
+      console.warn('Could not copy bundled db.json:', e);
+    }
+  }
+}
 if (fs.existsSync(DB_FILE)) {
   try {
     db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
