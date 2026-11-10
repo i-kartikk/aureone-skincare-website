@@ -312,9 +312,9 @@ function headHtml(m) {
     `<meta name="twitter:card" content="summary_large_image">`,
     `<link rel="icon" href="/favicon.svg" type="image/svg+xml">`,
     `<link rel="apple-touch-icon" href="/assets/img/monogram.png">`,
-    `<link rel="stylesheet" href="/assets/css/fixes.css?v=1">`,
+    `<link rel="stylesheet" href="/assets/css/fixes.css?v=2">`,
     `<script>window.AUREONE_SEO=${JSON.stringify({ titles: m.titleMap }).replace(/</g, '\\u003c')};</script>`,
-    `<script src="/assets/js/consent.js?v=1" defer></script>`,
+    `<script src="/assets/js/consent.js?v=2" defer></script>`,
     `<script type="application/ld+json">${ld}</script>`
   ].filter(Boolean).join('\n  ');
 }
