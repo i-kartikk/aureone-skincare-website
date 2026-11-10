@@ -40,17 +40,28 @@
 
   var PHONE = /(\+91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}/g;
   function enhance() {
-    /* Privacy notice on every form that collects personal data */
+    /* Privacy notice placed BELOW each form that collects personal data (never inside its flex row) */
     document.querySelectorAll('form').forEach(function (f) {
-      if (f.dataset.privacyNoted || !f.querySelector('input[type=email], input[name=email], input[name=phone], input[type=tel]')) return;
-      f.dataset.privacyNoted = '1';
-      var isNews = /sub/i.test(f.id || '');
+      var next = f.nextElementSibling;
+      if (next && next.classList.contains('form-privacy')) return;
+      if (!f.querySelector('input[type=email], input[name=email], input[name=phone], input[type=tel]')) return;
+      var fields = Array.prototype.filter.call(f.querySelectorAll('input, textarea, select'), function (i) {
+        return ['hidden', 'submit', 'button', 'checkbox', 'radio'].indexOf(i.type) === -1;
+      });
+      var isNews = fields.length === 1;
+      var isOrder = !!f.querySelector('[name*=address], [name*=pin], [name*=city]');
       var p = document.createElement('p');
       p.className = 'form-privacy';
       p.innerHTML = isNews
-        ? 'By subscribing you agree to receive emails from AUREONÉ. Unsubscribe any time. <a href="/privacy-policy">Privacy Policy</a>'
-        : 'We use these details only to reply to you or deliver your order. <a href="/privacy-policy">Privacy Policy</a>';
-      f.appendChild(p);
+        ? 'By subscribing you agree to receive emails from AUREONÉ. Unsubscribe anytime. <a href="/privacy-policy">Privacy Policy</a>'
+        : isOrder
+          ? 'We use these details only to deliver your order. <a href="/privacy-policy">Privacy Policy</a>'
+          : 'We use these details only to reply to you. <a href="/privacy-policy">Privacy Policy</a>';
+      var par = f.parentElement, pr = par.getBoundingClientRect(), fr = f.getBoundingClientRect();
+      var centered = getComputedStyle(par).textAlign === 'center' ||
+        (Math.abs((fr.left - pr.left) - (pr.right - fr.right)) < 6 && fr.width < pr.width - 20);
+      if (centered) p.classList.add('is-center');
+      f.insertAdjacentElement('afterend', p);
     });
     /* Make phone numbers in text clickable */
     document.querySelectorAll('#app p, #app span, #app li, footer p, footer span').forEach(function (n) {
