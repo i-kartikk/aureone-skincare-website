@@ -1,0 +1,69 @@
+/* AUREONÉ fixes: contrast, focus, legal pages, SSR shell, consent, breadcrumbs, CLS */
+:root { --gold-text: #7A602F; --ink: #211D19; --muted: #57524C; --line: #EAE1D4; }
+
+/* WCAG AA contrast — verified on the live site: every scanned text element passes after this.
+   (Before: gold text 2.1–3.6:1, white-on-gold buttons 2.7–3.8:1.)
+   :not(#_) raises specificity above the existing #id / !important rules. */
+#footTagline, .footer-tagline:not(#_),
+.brand-tagline:not(#_), .ar-eyebrow-sep:not(#_), .ar-eyebrow-tag:not(#_), .ar-product-step:not(#_),
+.ar-product-triad:not(#_), .ar-core-idea-tag:not(#_), .ar-eyebrow span:not(#_), .ar-philosophy-eyebrow span:not(#_) { color: #7A602F !important; }
+.btn-gold:not(#_):not(#_), .ar-btn-solid:not(#_):not(#_), .ar-product-add-btn:not(#_):not(#_),
+.btn.btn-gold.btn-shiny:not(#_):not(#_):not(#_) { background: #7A602F !important; background-image: none !important; border-color: #7A602F !important; color: #fff !important; }
+.btn-primary.btn-shiny:not(#_):not(#_) { background: #B99A60 !important; border-color: #B99A60 !important; }
+
+/* Always-visible keyboard focus */
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* Layout shift: reserve image space (none of the 18 homepage images had width/height) */
+img { height: auto; max-width: 100%; }
+.ar-product-img-box img { aspect-ratio: 4 / 5; object-fit: cover; width: 100%; }
+html, body { overflow-x: clip; }
+
+/* Server-rendered content (shown to crawlers and before the app boots) */
+.ssr-shell { min-height: 70vh; }
+.ssr-shell, .legal-page { padding: clamp(32px, 6vw, 72px) 20px; }
+.legal-wrap { max-width: 68ch; margin: 0 auto; color: var(--ink); font-family: Montserrat, system-ui, sans-serif; font-size: 15px; line-height: 1.7; }
+.legal-wrap h1 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(32px, 5vw, 48px); line-height: 1.1; margin: 8px 0 16px; }
+.legal-wrap h2 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 600; font-size: 24px; margin: 36px 0 8px; }
+.legal-wrap .lede { color: var(--muted); font-size: 17px; }
+.legal-wrap a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+.legal-table { width: 100%; border-collapse: collapse; font-size: 14px; display: block; overflow-x: auto; }
+.legal-table th, .legal-table td { text-align: left; vertical-align: top; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.not-found h1 { font-size: clamp(40px, 7vw, 64px); }
+
+/* Breadcrumbs */
+.crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.crumbs li + li::before { content: "/"; margin-right: 6px; color: #A99A89; }
+.crumbs a { color: var(--muted); }
+#app > .page-enter > .crumbs { max-width: 1200px; margin: 16px auto 0; padding: 0 20px; }
+
+/* Footer legal bar */
+.footer-legal { border-top: 1px solid var(--line); margin-top: 32px; padding: 20px 0 8px; font-size: 13px; color: var(--muted); }
+.footer-legal nav { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.footer-legal a, .footer-legal .link-btn { color: var(--muted); text-decoration: none; padding: 10px 0; display: inline-block; }
+.footer-legal a:hover, .footer-legal .link-btn:hover { color: var(--ink); text-decoration: underline; }
+.link-btn { background: none; border: 0; font: inherit; cursor: pointer; }
+.footer-contact a { color: var(--ink); }
+
+/* Form privacy notice */
+.form-privacy { font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; flex-basis: 100%; }
+.form-privacy a { color: inherit; text-decoration: underline; }
+
+/* Cookie notice */
+.consent { position: fixed; z-index: 9999; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  max-width: 440px; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 4px;
+  padding: 20px; box-shadow: 0 12px 32px rgba(33, 29, 25, .12); font: 14px/1.55 Montserrat, system-ui, sans-serif; }
+.consent h2 { font: 600 20px/1.2 "Cormorant Garamond", Georgia, serif; margin: 0 0 6px; }
+.consent p { margin: 0 0 14px; color: var(--muted); }
+.consent a { color: var(--ink); }
+.consent-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.consent-btn { flex: 1; min-height: 44px; padding: 0 16px; border: 1px solid var(--ink); background: #fff; color: var(--ink); font: 600 13px Montserrat, sans-serif; cursor: pointer; }
+.consent-btn--primary { background: var(--ink); color: #fff; }
+@media (max-width: 760px) { .consent { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+/* Founder / author box on /about */
+.author-box { display: flex; gap: 20px; align-items: flex-start; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 24px 0; margin: 24px 0; }
+.author-box img { border-radius: 50%; object-fit: cover; flex: none; }
+.author-box h2 { margin: 0 0 4px; }
+.author-cred { color: var(--muted); font-size: 13px; margin: 0 0 8px; }

@@ -2,22 +2,25 @@
   "version": 2,
   "functions": {
     "api/index.js": {
-      "includeFiles": "{public/**,data/**}"
+      "includeFiles": "{public/**,data/**,seo.js,legal-content.js,site.config.js}"
     }
   },
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store" },
+        { "key": "X-Robots-Tag", "value": "noindex" }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/index.js" },
-    { "source": "/uploads/:path*", "destination": "/api/index.js" },
-    { "source": "/admin/:path*", "destination": "/api/index.js" },
-    { "source": "/admin", "destination": "/api/index.js" },
     { "source": "/(.*)", "destination": "/api/index.js" }
   ]
 }

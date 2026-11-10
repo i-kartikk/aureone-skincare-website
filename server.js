@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { neon } = require('@neondatabase/serverless');
 const seed = require('./seed');
+const seo = require('./seo');
 
 /* ---------- load environment variables safely ---------- */
 function loadEnv() {
@@ -550,6 +551,7 @@ app.use('/uploads', express.static(UPLOAD_DIR, {
   dotfiles: 'deny',
   fallthrough: false
 }));
+seo.early(app, { PUBLIC_DIR });
 app.use(express.static(PUBLIC_DIR, {
   index: false,
   dotfiles: 'deny'
@@ -1261,9 +1263,7 @@ app.get(['/admin', '/admin/*'], (req, res) => {
   res.sendFile(path.join(PUBLIC_DIR, 'admin', 'index.html'));
 });
 
-app.get('*', (req, res) => {
-  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
-});
+seo.pages(app, { PUBLIC_DIR, getDb: () => db });
 
 /* Centralized production-safe error handler (no stack trace leak) */
 app.use((err, req, res, next) => {

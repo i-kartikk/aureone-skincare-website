@@ -1695,7 +1695,8 @@
     [/^\/contact\/?$/, () => pages.contact(), mountContact],
     [/^\/checkout\/?$/, () => pages.checkout(), mountCheckout],
     [/^\/order\/([^/]+)\/?$/, m => pages.order(decodeURIComponent(m[1]))],
-    [/^\/account\/?$/, () => pages.account(), mountAccount]
+    [/^\/account\/?$/, () => pages.account(), mountAccount],
+    [/^\/(privacy-policy|terms-and-conditions|cookie-policy|refund-policy|shipping-policy|faq)\/?$/, () => { const el = document.querySelector('#app [data-ssr-static]'); return el ? el.outerHTML : notFound(); }]
   ];
 
   function updateLucideIcons() {
@@ -1710,13 +1711,14 @@
 
   function render() {
     const path = location.pathname;
-    document.title = 'AUREONÉ — The Art of Radiance';
+    document.title = pageTitle(path);
     let html = notFound(), mount = null;
     for (const [re, view, m] of routes) {
       const match = path.match(re);
       if (match) { html = view(match); mount = m; break; }
     }
     app.innerHTML = `<div class="page-enter">${html}</div>`;
+    injectCrumbs(path);
     mount?.();
     $$('.nav-links a, .mobile-nav a').forEach(a => {
       const href = a.getAttribute('href');
@@ -1726,6 +1728,38 @@
     observeReveal();
     renderDesignSwitcher();
     updateLucideIcons();
+  }
+  /* ---------- SEO helpers ---------- */
+  function pageTitle(path) {
+    const T = (window.AUREONE_SEO && window.AUREONE_SEO.titles) || {};
+    const m = path.match(/^\/product\/([^/]+)/);
+    if (m) {
+      const p = (state.products || []).find(x => x.slug === decodeURIComponent(m[1]));
+      if (p) return (p.name + (p.subtitle ? ' — ' + p.subtitle : '') + ' | AUREONÉ').slice(0, 70);
+    }
+    return T[path.replace(/\/$/, '') || '/'] || T['/'] || document.title;
+  }
+  const CAT_NAMES = { Cleanse: 'Face Cleansers', Treat: 'Face Serums', Moisturize: 'Moisturisers', Protect: 'Sunscreens' };
+  function injectCrumbs(path) {
+    const root = app.querySelector('.page-enter');
+    if (!root || path === '/' || root.querySelector('.crumbs') || /^\/(checkout|account|order)/.test(path)) return;
+    const c = [['Home', '/']];
+    const pm = path.match(/^\/product\/([^/]+)/);
+    const named = { '/shop': 'Shop', '/about': 'Our Story', '/ritual': 'The Ritual', '/offers': 'Offers', '/contact': 'Contact' };
+    if (pm) {
+      const p = (state.products || []).find(x => x.slug === decodeURIComponent(pm[1]));
+      if (!p) return;
+      c.push(['Shop', '/shop']);
+      if (CAT_NAMES[p.category]) c.push([CAT_NAMES[p.category], '/shop?c=' + p.category]);
+      c.push([p.name]);
+    } else if (named[path]) {
+      const cat = new URLSearchParams(location.search).get('c');
+      if (path === '/shop' && CAT_NAMES[cat]) { c.push(['Shop', '/shop'], [CAT_NAMES[cat]]); } else c.push([named[path]]);
+    } else return;
+    const nav = document.createElement('nav');
+    nav.className = 'crumbs'; nav.setAttribute('aria-label', 'Breadcrumb');
+    nav.innerHTML = '<ol>' + c.map(([n, u]) => u ? '<li><a href="' + u + '" data-link>' + n + '</a></li>' : '<li aria-current="page">' + n + '</li>').join('') + '</ol>';
+    root.prepend(nav);
   }
 
   function navigate(url) {
