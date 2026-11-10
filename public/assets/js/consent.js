@@ -1,6 +1,12 @@
 /* AUREONÉ — cookie notice, consent store, form privacy notices, a11y helpers.
    window.aureoneConsent.has('analytics') → false until the visitor opts in.
    Load any future analytics/ads ONLY inside aureoneConsent.onChange(c => c.analytics && ...). */
+/* Save server-rendered legal/FAQ content before the shop app replaces #app with its loader */
+(function () {
+  var el = document.querySelector('#app [data-ssr-static]');
+  if (el) window.__AUREONE_STATIC__ = { path: location.pathname.replace(/\/$/, ''), html: el.outerHTML };
+})();
+
 (function () {
   var KEY = 'aureone_consent', listeners = [];
   function read() { try { var v = JSON.parse(localStorage.getItem(KEY) || 'null'); if (v && Date.now() - v.t < 365 * 864e5) return v; } catch (e) {} return null; }

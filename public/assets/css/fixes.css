@@ -68,3 +68,7 @@ html, body { overflow-x: clip; }
 .author-box img { border-radius: 50%; object-fit: cover; flex: none; }
 .author-box h2 { margin: 0 0 4px; }
 .author-cred { color: var(--muted); font-size: 13px; margin: 0 0 8px; }
+
+/* Footer legal bar: keep "Cookie settings" on the same line and size as the links */
+.footer-legal nav { align-items: center; }
+.footer-legal nav a, .footer-legal nav .link-btn { display: inline-flex; align-items: center; min-height: 40px; padding: 0; margin: 0; font: inherit; font-size: 13px; line-height: 1.4; letter-spacing: inherit; color: var(--muted); vertical-align: middle; }

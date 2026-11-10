@@ -1696,7 +1696,7 @@
     [/^\/checkout\/?$/, () => pages.checkout(), mountCheckout],
     [/^\/order\/([^/]+)\/?$/, m => pages.order(decodeURIComponent(m[1]))],
     [/^\/account\/?$/, () => pages.account(), mountAccount],
-    [/^\/(privacy-policy|terms-and-conditions|cookie-policy|refund-policy|shipping-policy|faq)\/?$/, () => { const el = document.querySelector('#app [data-ssr-static]'); return el ? el.outerHTML : notFound(); }]
+    [/^\/(privacy-policy|terms-and-conditions|cookie-policy|refund-policy|shipping-policy|faq)\/?$/, () => { const saved = window.__AUREONE_STATIC__, here = location.pathname.replace(/\/$/, ''); if (saved && saved.path === here) { sessionStorage.removeItem('aureone_static_reload'); return saved.html; } if (sessionStorage.getItem('aureone_static_reload') !== here) { sessionStorage.setItem('aureone_static_reload', here); location.replace(location.pathname); return ''; } return notFound(); }]
   ];
 
   function updateLucideIcons() {
@@ -1711,7 +1711,7 @@
 
   function render() {
     const path = location.pathname;
-    document.title = pageTitle(path);
+    document.title = (window.__AUREONE_STATIC__ && window.__AUREONE_STATIC__.path === path.replace(/\/$/, '') && window.AUREONE_SEO && window.AUREONE_SEO.titles[window.__AUREONE_STATIC__.path]) || pageTitle(path);
     let html = notFound(), mount = null;
     for (const [re, view, m] of routes) {
       const match = path.match(re);
