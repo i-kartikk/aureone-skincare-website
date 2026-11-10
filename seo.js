@@ -312,9 +312,9 @@ function headHtml(m) {
     `<meta name="twitter:card" content="summary_large_image">`,
     `<link rel="icon" href="/favicon.svg" type="image/svg+xml">`,
     `<link rel="apple-touch-icon" href="/assets/img/monogram.png">`,
-    `<link rel="stylesheet" href="/assets/css/fixes.css?v=2">`,
+    `<link rel="stylesheet" href="/assets/css/fixes.css?v=3">`,
     `<script>window.AUREONE_SEO=${JSON.stringify({ titles: m.titleMap }).replace(/</g, '\\u003c')};</script>`,
-    `<script src="/assets/js/consent.js?v=2" defer></script>`,
+    `<script src="/assets/js/consent.js?v=3" defer></script>`,
     `<script type="application/ld+json">${ld}</script>`
   ].filter(Boolean).join('\n  ');
 }
@@ -368,7 +368,7 @@ ${urls.map(([u, pr, imgs]) => `  <url><loc>${esc(abs(u))}</loc><priority>${pr}</
     const db = getDb() || {};
     const m = resolve(req.path, req.query || {}, db);
     // titles the SPA uses on client-side navigation (keeps titles unique after JS runs)
-    m.titleMap = Object.fromEntries(['/', '/shop', '/about', '/ritual', '/offers', '/contact', '/faq', '/checkout', '/account']
+    m.titleMap = Object.fromEntries(['/', '/shop', '/about', '/ritual', '/offers', '/contact', '/faq', '/checkout', '/account', ...STATIC_PAGES.map(s => '/' + s)]
       .map(p => [p, resolve(p, {}, db).title]));
     let html = template()
       .replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(m.title)}</title>`)
@@ -376,6 +376,7 @@ ${urls.map(([u, pr, imgs]) => `  <url><loc>${esc(abs(u))}</loc><priority>${pr}</
       .replace(/<link rel="icon"[^>]*>/, '')
       .replace('</head>', `  ${headHtml(m)}\n</head>`)
       .replace(/<script src="(\/assets\/js\/(?:three\.min|lucide\.min|store)\.js[^"]*)"><\/script>/g, '<script src="$1" defer></script>')
+      .replace(/\/assets\/js\/store\.js\?v=[\d.]+/, '/assets/js/store.js?v=7.2')
       .replace(/<main id="app" tabindex="-1"><\/main>/, `<main id="app" tabindex="-1">${bodyHtml(m)}</main>`)
       .replace('</footer>', `${footerExtras()}\n</footer>`);
     res.status(m.status)
