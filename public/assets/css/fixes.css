@@ -45,9 +45,10 @@ html, body { overflow-x: clip; }
 .link-btn { background: none; border: 0; font: inherit; cursor: pointer; }
 .footer-contact a { color: var(--ink); }
 
-/* Form privacy notice */
-.form-privacy { font-size: 12px; color: var(--muted); margin: 10px 0 0; line-height: 1.5; flex-basis: 100%; }
-.form-privacy a { color: inherit; text-decoration: underline; }
+/* Form privacy notice — sits below the form, matches its alignment */
+.form-privacy { display: block; font-size: 12px; line-height: 1.5; color: var(--muted); margin: 14px 0 0; max-width: 46ch; text-align: left; }
+.form-privacy.is-center { text-align: center; margin-left: auto; margin-right: auto; }
+.form-privacy a { color: inherit; text-decoration: underline; text-underline-offset: 2px; white-space: nowrap; }
 
 /* Cookie notice */
 .consent { position: fixed; z-index: 9999; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px));
